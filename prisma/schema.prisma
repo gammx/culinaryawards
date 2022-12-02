@@ -37,11 +37,17 @@ model Session {
   @@map("sessions")
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
   emailVerified DateTime?
+  role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]
 
@@ -56,4 +62,46 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model Category {
+  id           String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  location     String?
+  participants ParticipantsOnCategories[]
+  votes        Votes[]
+
+  @@map("categories")
+}
+
+model Participant {
+  id         String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  thumbnail  String
+  categories ParticipantsOnCategories[]
+  votes      Votes[]
+
+  @@map("participants")
+}
+
+model ParticipantsOnCategories {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  participant   Participant @relation(fields: [participantId], references: [id])
+  category      Category    @relation(fields: [categoryId], references: [id])
+  participantId String
+  categoryId    String
+
+  @@unique([participantId, categoryId])
+  @@map("participants_on_categories")
+}
+
+model Votes {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  participant   Participant @relation(fields: [participantId], references: [id])
+  category      Category    @relation(fields: [categoryId], references: [id])
+  participantId String
+  categoryId    String
+  
+  @@unique([participantId, categoryId])
+  @@map("votes")
 }
