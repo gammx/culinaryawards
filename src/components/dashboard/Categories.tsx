@@ -1,18 +1,26 @@
 import { ChangeEventHandler, useState } from 'react';
 import { trpc } from '~/utils/trpc';
-import { categoryCreateSchema } from '~/utils/schemas/categories';
+import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
 import Dialog from '../UI/Dialog';
 import useZod from '~/hooks/useZod';
+import { Category } from '@prisma/client';
 
 const Categories = () => {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [categoryFormData, setCategoryFormData] = useState({
 		name: '',
-		location: ''
+		location: '',
 	});
+	const [categoryToEdit, setCategoryToEdit] = useState({
+		id: '',
+		name: '',
+		location: '',
+	} as Category);
 	const [categoryIdToDelete, setCategoryIdToDelete] = useState('');
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
+	const categoryEditZod = useZod(categoryEditSchema);
 	const allCategories = trpc.categories.getAllCategories.useQuery();
 	const utils = trpc.useContext();
 	const categoryCreate = trpc.categories.addNewCategory.useMutation({
@@ -24,7 +32,26 @@ const Categories = () => {
 			);
 			setErrors({});
 			setIsCreateModalOpen(false);
-			clearCreateCategoryFormData();
+			clearCategoryFormData();
+			return { prevData };
+		},
+		onError(err, vars, ctx) {
+			ctx && utils.categories.getAllCategories.setData(undefined, ctx.prevData);
+		},
+		onSettled() {
+			utils.categories.getAllCategories.invalidate();
+		}
+	});
+	const categoryEdit = trpc.categories.editCategory.useMutation({
+		async onMutate(dto) {
+			await utils.categories.getAllCategories.cancel();
+			const prevData = utils.categories.getAllCategories.getData();
+			utils.categories.getAllCategories.setData(undefined,
+				(old) => old && old.map((category) => category.id === dto.id ? dto : category)
+			);
+			categoryEditZod.setErrors({});
+			setIsEditModalOpen(false);
+			clearCategoryFormData();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -57,14 +84,26 @@ const Categories = () => {
 		setCategoryFormData({ ...categoryFormData, [event.target.id]: event.target.value });
 	};
 
-	const clearCreateCategoryFormData = () => {
+	const handleCategoryEditFormData: ChangeEventHandler<HTMLInputElement> = (event) => {
+		setCategoryToEdit({ ...categoryToEdit, [event.target.id]: event.target.value });
+	};
+
+	const clearCategoryFormData = () => {
 		setCategoryFormData({ name: '', location: '' });
+		setCategoryToEdit({ id: '', name: '', location: '' });
 	};
 
 	const createCategory = () => {
 		// Validate on the client first
 		const isAllowed = validate(categoryFormData);
 		isAllowed && categoryCreate.mutate(categoryFormData);
+	};
+
+	const editCategory = () => {
+		if (!categoryToEdit) return;
+		// Validate on the client first
+		const isAllowed = categoryEditZod.validate(categoryToEdit);
+		isAllowed && categoryEdit.mutate(categoryToEdit);
 	};
 
 	const deleteCategory = () => {
@@ -144,12 +183,58 @@ const Categories = () => {
 									</Dialog.Actions>
 								</Dialog.Content>
 							</Dialog.Root>
+							<button
+								className="bg-yellow-500 px-2 cursor-pointer"
+								onClick={() => {
+									setCategoryToEdit(category);
+									setIsEditModalOpen(true);
+								}}
+							>
+								~
+							</button>
 						</li>
 					))
 					: allCategories.isLoading ? <p>Loading...</p>
 						: <p>No categories man... </p>
 				}
 			</ul>
+			<Dialog.Root open={isEditModalOpen} onOpenChange={isOpen => setIsEditModalOpen(isOpen)}>
+				<Dialog.Content
+					title="Edit Category"
+					description="Edit this category"
+				>
+					<fieldset className="flex flex-col space-y-2">
+						<label htmlFor="name">Name</label>
+						<input
+							autoFocus
+							id="name"
+							type="text"
+							placeholder="Something crazy"
+							value={categoryToEdit.name}
+							onChange={handleCategoryEditFormData}
+						/>
+						<p className="text-xs text-red-500">{errors.name}</p>
+					</fieldset>
+					<fieldset className="flex flex-col space-y-2">
+						<label htmlFor="location">Location</label>
+						<input
+							id="location"
+							type="text"
+							placeholder="Where?"
+							value={categoryToEdit.location ?? ''}
+							onChange={handleCategoryEditFormData}
+						/>
+					</fieldset>
+					<Dialog.Actions>
+						<button
+							className="bg-yellow-500 px-2 py-2 rounded mr-2 text-xs uppercase"
+							onClick={editCategory}
+						>
+							Edit
+						</button>
+					</Dialog.Actions>
+				</Dialog.Content>
+			</Dialog.Root>
 		</div>
 	);
 };

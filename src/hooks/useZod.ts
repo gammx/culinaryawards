@@ -38,7 +38,7 @@ const useZod = <T extends ZodRawShape>(schema: ZodObject<T>) => {
 		validate,
 		errors,
 		setErrors
-	}
+	};
 };
 
 export default useZod;

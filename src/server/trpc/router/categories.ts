@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, adminProcedure } from "../trpc";
-import { categoryCreateSchema } from "~/utils/schemas/categories";
+import { categoryCreateSchema, categoryEditSchema } from "~/utils/schemas/categories";
 
 export const categoryRouter = router({
   getAllCategories: adminProcedure.query(async ({ ctx }) => {
@@ -22,6 +22,20 @@ export const categoryRouter = router({
 		.mutation(async ({ ctx, input }) => {
 			const { name, location } = input;
 			return await ctx.prisma.category.create({
+				data: {
+					name,
+					location
+				}
+			});
+		}),
+	editCategory: adminProcedure
+		.input(categoryEditSchema)
+		.mutation(async ({ ctx, input }) => {
+			const { name, location } = input;
+			return await ctx.prisma.category.update({
+				where: {
+					id: input.id,
+				},
 				data: {
 					name,
 					location
