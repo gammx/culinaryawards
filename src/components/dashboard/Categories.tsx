@@ -1,15 +1,18 @@
 import { ChangeEventHandler, useState } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema } from '~/utils/schemas/categories';
-import * as Dialog from '@radix-ui/react-dialog';
+import Dialog from '../UI/Dialog';
 import useZod from '~/hooks/useZod';
 
 const Categories = () => {
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [categoryFormData, setCategoryFormData] = useState({
 		name: '',
 		location: ''
 	});
-	const { validate, errors } = useZod(categoryCreateSchema);
+	const [categoryIdToDelete, setCategoryIdToDelete] = useState('');
+	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
 	const allCategories = trpc.categories.getAllCategories.useQuery();
 	const utils = trpc.useContext();
 	const categoryCreate = trpc.categories.addNewCategory.useMutation({
@@ -19,6 +22,9 @@ const Categories = () => {
 			utils.categories.getAllCategories.setData(undefined,
 				(old) => old && [...old, { id: '-1', name, location }]
 			);
+			setErrors({});
+			setIsCreateModalOpen(false);
+			clearCreateCategoryFormData();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -27,7 +33,7 @@ const Categories = () => {
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
 		}
-	})
+	});
 	const categoryDelete = trpc.categories.deleteCategory.useMutation({
 		async onMutate({ categoryId }) {
 			// Optimistically update to the new value
@@ -36,6 +42,7 @@ const Categories = () => {
 			utils.categories.getAllCategories.setData(undefined,
 				(old) => old && old.filter((category) => category.id !== categoryId)
 			);
+			setIsDeleteModalOpen(false);
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -50,28 +57,37 @@ const Categories = () => {
 		setCategoryFormData({ ...categoryFormData, [event.target.id]: event.target.value });
 	};
 
-	/** It creates a new category validating on the client first */
+	const clearCreateCategoryFormData = () => {
+		setCategoryFormData({ name: '', location: '' });
+	};
+
 	const createCategory = () => {
+		// Validate on the client first
 		const isAllowed = validate(categoryFormData);
 		isAllowed && categoryCreate.mutate(categoryFormData);
+	};
+
+	const deleteCategory = () => {
+		categoryDelete.mutate({ categoryId: categoryIdToDelete });
 	};
 
 	return (
 		<div>
 			<div className="flex">
 				<h1 className="text-2xl font-semibold">Categories</h1>
-				<Dialog.Root>
+				<Dialog.Root open={isCreateModalOpen} onOpenChange={isOpen => setIsCreateModalOpen(isOpen)}>
 					<Dialog.Trigger className="bg-green-500 px-2 cursor-pointer uppercase">
-						+ Add new
+						+ Add New
 					</Dialog.Trigger>
-					<Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-					<Dialog.Content className="bg-white rounded p-4 fixed top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 w-80">
-						<Dialog.Title className="text-lg font-bold">Add New Category</Dialog.Title>
-						<Dialog.Description className="mt-2 text-xs">Fill up the next fields</Dialog.Description>
-						<div className="mt-2 flex flex-col space-y-4">
+					<Dialog.Content
+						title="Add New Category"
+						description="Add a new category"
+					>
+						<div className="flex flex-col space-y-4">
 							<fieldset className="flex flex-col space-y-2">
 								<label htmlFor="name">Name</label>
 								<input
+									autoFocus
 									id="name"
 									type="text"
 									placeholder="Something crazy"
@@ -91,15 +107,14 @@ const Categories = () => {
 								/>
 							</fieldset>
 						</div>
-						<div className="mt-4 flex justify-end">
-							<Dialog.Close className="bg-gray-200 px-2 py-2 rounded mr-2 text-xs uppercase">Cancel</Dialog.Close>
+						<Dialog.Actions>
 							<button
 								className="bg-green-500 px-2 py-2 rounded mr-2 text-xs uppercase"
 								onClick={createCategory}
 							>
 								Add
 							</button>
-						</div>
+						</Dialog.Actions>
 					</Dialog.Content>
 				</Dialog.Root>
 			</div>
@@ -108,27 +123,25 @@ const Categories = () => {
 					? allCategories.data.map((category) => (
 						<li key={category.id} className="flex">
 							<span>{category.name}</span>
-							<Dialog.Root>
-								<Dialog.Trigger className="bg-red-500 px-2 cursor-pointer">
+							<Dialog.Root open={isDeleteModalOpen} onOpenChange={isOpen => setIsDeleteModalOpen(isOpen)}>
+								<Dialog.Trigger
+									className="bg-red-500 px-2 cursor-pointer"
+									onClick={() => setCategoryIdToDelete(category.id)}
+								>
 									x
 								</Dialog.Trigger>
-								<Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-								<Dialog.Content className="bg-white rounded p-4 fixed top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 w-64">
-									<Dialog.Title className="text-lg font-bold">
-										Delete Category
-									</Dialog.Title>
-									<Dialog.Description className="mt-2 text-sm">
-										Are you sure you want to delete this category?
-									</Dialog.Description>
-									<div className="flex justify-end mt-4">
-										<Dialog.Close className="bg-gray-200 px-2 py-2 rounded mr-2 text-xs uppercase">Cancel</Dialog.Close>
+								<Dialog.Content
+									title="Delete Category"
+									description="Are you sure you want to delete this category?"
+								>
+									<Dialog.Actions>
 										<button
 											className="bg-red-500 px-2 py-2 rounded mr-2 text-xs uppercase"
-											onClick={() => categoryDelete.mutate({ categoryId: category.id })}
+											onClick={deleteCategory}
 										>
 											Delete
 										</button>
-									</div>
+									</Dialog.Actions>
 								</Dialog.Content>
 							</Dialog.Root>
 						</li>
