@@ -78,6 +78,8 @@ model Participant {
   id         String                     @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   thumbnail  String
+  website    String?                    @default("#")
+  mapsAnchor String?                    @default("#")
   categories ParticipantsOnCategories[]
   votes      Votes[]
 
@@ -101,7 +103,7 @@ model Votes {
   category      Category    @relation(fields: [categoryId], references: [id])
   participantId String
   categoryId    String
-  
+
   @@unique([participantId, categoryId])
   @@map("votes")
 }
