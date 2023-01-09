@@ -90,8 +90,8 @@ model ParticipantsOnCategories {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   participant   Participant @relation(fields: [participantId], references: [id])
   category      Category    @relation(fields: [categoryId], references: [id])
-  participantId String
-  categoryId    String
+  participantId String      @db.ObjectId
+  categoryId    String      @db.ObjectId
 
   @@unique([participantId, categoryId])
   @@map("participants_on_categories")
@@ -101,8 +101,8 @@ model Votes {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   participant   Participant @relation(fields: [participantId], references: [id])
   category      Category    @relation(fields: [categoryId], references: [id])
-  participantId String
-  categoryId    String
+  participantId String      @db.ObjectId
+  categoryId    String      @db.ObjectId
 
   @@unique([participantId, categoryId])
   @@map("votes")
