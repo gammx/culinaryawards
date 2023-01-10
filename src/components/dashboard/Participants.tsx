@@ -56,6 +56,22 @@ const Participants = () => {
 			utils.participants.getAllParticipants.invalidate();
 		}
 	});
+	const participantDelete = trpc.participants.deleteParticipant.useMutation({
+		async onMutate(dto) {
+			await utils.participants.getAllParticipants.cancel();
+			const prevData = utils.participants.getAllParticipants.getData();
+			utils.participants.getAllParticipants.setData(undefined,
+				(old) => old && old.filter((participant) => participant.id !== dto.participantId)
+			);
+			return { prevData };
+		},
+		onError(err, vars, ctx) {
+			ctx && utils.participants.getAllParticipants.setData(undefined, ctx.prevData);
+		},
+		onSettled() {
+			utils.participants.getAllParticipants.invalidate();
+		}
+	});
 
 	const participantHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
 		setParticipantForm((prev) => ({
@@ -67,6 +83,10 @@ const Participants = () => {
 	const createParticipant = async () => {
 		const isAllowed = validate(participantForm);
 		isAllowed && participantCreate.mutate(participantForm);
+	};
+
+	const deleteParticipant = async (participantId: string) => {
+		participantDelete.mutate({ participantId });
 	};
 
 	const clearParticipantForm = () => {
@@ -162,7 +182,14 @@ const Participants = () => {
 			<ul>
 				{allParticipants.data && allParticipants.data.length > 0
 					? allParticipants.data?.map((participant) => (
-						<li key={participant.id}> <img src={participant.thumbnail} width={16} className="inline" /> {participant.name}</li>
+						<li key={participant.id}>
+							<img src={participant.thumbnail} width={16} className="inline" />
+							<span>{participant.name}</span>
+							<button
+								className="bg-red-500 px-2 cursor-pointer"
+								onClick={() => deleteParticipant(participant.id)}
+							>x</button>
+						</li>
 					))
 					: allParticipants.isLoading ? <p>Loading...</p>
 					: <p>No participants found</p>
