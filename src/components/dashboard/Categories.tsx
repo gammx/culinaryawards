@@ -17,6 +17,7 @@ const Categories = () => {
 		id: '',
 		name: '',
 		location: '',
+		participantIds: []
 	} as Category);
 	const [categoryIdToDelete, setCategoryIdToDelete] = useState('');
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
@@ -24,11 +25,11 @@ const Categories = () => {
 	const allCategories = trpc.categories.getAllCategories.useQuery();
 	const utils = trpc.useContext();
 	const categoryCreate = trpc.categories.addNewCategory.useMutation({
-		async onMutate({ name, location }) {
+		async onMutate(vars) {
 			await utils.categories.getAllCategories.cancel();
 			const prevData = utils.categories.getAllCategories.getData();
 			utils.categories.getAllCategories.setData(undefined,
-				(old) => old && [...old, { id: '-1', name, location }]
+				(old) => old && [...old, { ...vars, id: '-1', participantIds: [] }]
 			);
 			setErrors({});
 			setIsCreateModalOpen(false);
@@ -90,7 +91,7 @@ const Categories = () => {
 
 	const clearCategoryFormData = () => {
 		setCategoryFormData({ name: '', location: '' });
-		setCategoryToEdit({ id: '', name: '', location: '' });
+		setCategoryToEdit({ id: '', name: '', location: '', participantIds: [] });
 	};
 
 	const createCategory = () => {

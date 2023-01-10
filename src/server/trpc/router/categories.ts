@@ -31,14 +31,15 @@ export const categoryRouter = router({
 	editCategory: adminProcedure
 		.input(categoryEditSchema)
 		.mutation(async ({ ctx, input }) => {
-			const { name, location } = input;
+			const { name, location, participantIds } = input;
 			return await ctx.prisma.category.update({
 				where: {
 					id: input.id,
 				},
 				data: {
 					name,
-					location
+					location,
+					participantIds
 				}
 			});
 		}),

@@ -42,7 +42,7 @@ const Participants = () => {
 			await utils.participants.getAllParticipants.cancel();
 			const prevData = utils.participants.getAllParticipants.getData();
 			utils.participants.getAllParticipants.setData(undefined,
-				(old) => old && [...old, { id: '-1', ...vars }]
+				(old) => old && [...old, { ...vars, id: '-1', categoryIds: [] }]
 			);
 			setErrors({});
 			setIsCreateModalOpen(false);
