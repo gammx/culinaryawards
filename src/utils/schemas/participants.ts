@@ -9,6 +9,6 @@ export const participantCreateSchema = z.object({
 		.max(150, "Must be 150 or fewer characters long"),
 	thumbnail: z.string().min(1, "Every participant must have a thumbnail"),
 	categories: z.array(z.string()).min(1, "A participant needs to be in at least one category"),
-	website: z.string().optional(),
-	mapsAnchor: z.string().optional(),
+	website: z.string().nullable(),
+	mapsAnchor: z.string().nullable(),
 });

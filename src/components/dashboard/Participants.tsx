@@ -36,6 +36,26 @@ const Participants = () => {
 	const { fileInputRef, uploadImage } = useUploadImage({
 		onUpload: (url) => setParticipantForm(prev => ({ ...prev, thumbnail: url as string }))
 	});
+	const utils = trpc.useContext();
+	const participantCreate = trpc.participants.addNewParticipant.useMutation({
+		async onMutate(vars) {
+			await utils.participants.getAllParticipants.cancel();
+			const prevData = utils.participants.getAllParticipants.getData();
+			utils.participants.getAllParticipants.setData(undefined,
+				(old) => old && [...old, { id: '-1', ...vars }]
+			);
+			setErrors({});
+			setIsCreateModalOpen(false);
+			clearParticipantForm();
+			return { prevData };
+		},
+		onError(err, vars, ctx) {
+			ctx && utils.participants.getAllParticipants.setData(undefined, ctx.prevData);
+		},
+		onSuccess() {
+			utils.participants.getAllParticipants.invalidate();
+		}
+	});
 
 	const participantHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
 		setParticipantForm((prev) => ({
@@ -45,9 +65,12 @@ const Participants = () => {
 	};
 
 	const createParticipant = async () => {
-		const isValid = validate(participantForm);
-		if (!isValid) return;
-		console.log(participantForm);
+		const isAllowed = validate(participantForm);
+		isAllowed && participantCreate.mutate(participantForm);
+	};
+
+	const clearParticipantForm = () => {
+		setParticipantForm({ name: '', direction: '', thumbnail: '', categories: [], website: '', mapsAnchor: '' });
 	};
 
 	return (
@@ -139,7 +162,7 @@ const Participants = () => {
 			<ul>
 				{allParticipants.data && allParticipants.data.length > 0
 					? allParticipants.data?.map((participant) => (
-						<li key={participant.id}>{participant.name}</li>
+						<li key={participant.id}> <img src={participant.thumbnail} width={16} className="inline" /> {participant.name}</li>
 					))
 					: allParticipants.isLoading ? <p>Loading...</p>
 					: <p>No participants found</p>
