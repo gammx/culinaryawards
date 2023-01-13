@@ -24,7 +24,7 @@ const Categories = () => {
 		location: '',
 		participantIds: []
 	} as Category);
-	const [categoryIdToDelete, setCategoryIdToDelete] = useState('');
+	const [categoryDeletable, setCategoryDeletable] = useState('');
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
 	const categoryEditZod = useZod(categoryEditSchema);
 	const utils = trpc.useContext();
@@ -75,6 +75,8 @@ const Categories = () => {
 		},
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
+			// We're probably assigning this category to some participants, so we need to invalidate the participants query
+			utils.participants.getAllParticipants.invalidate();
 		}
 	});
 	const categoryDelete = trpc.categories.deleteCategory.useMutation({
@@ -96,20 +98,24 @@ const Categories = () => {
 		}
 	});
 
+	/** It clears both category forms */
 	const categoryFormClear = () => {
 		setCategoryCreatable({ name: '', location: '', participantIds: [] });
 		setCategoryEditable({ id: '', name: '', location: '', participantIds: [] });
 	};
 
+	/** It handles the category create form updates */
 	const categoryCreateHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		setCategoryCreatable({ ...categoryCreatable, [event.target.id]: event.target.value });
 	};
 
+	/** It executes the category create mutation, validating the values first */
 	const categoryCreateAction = () => {
 		const isAllowed = validate(categoryCreatable);
 		isAllowed && categoryCreate.mutate(categoryCreatable);
 	};
 
+	/** It opens the category edit modal */
 	const categoryEditLink = (editable: Category) => {
 		setCategoryEditable(editable);
 		if (participants) {
@@ -121,18 +127,21 @@ const Categories = () => {
 		setIsEditModalOpen(true);
 	};
 
+	/** It handles the category edit form updates */
 	const categoryEditHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		setCategoryEditable({ ...categoryEditable, [event.target.id]: event.target.value });
 	};
 
+	/** It executes the category edit mutation, if the validation gets passed */
 	const categoryEditAction = () => {
 		if (!categoryEditable) return;
 		const isAllowed = categoryEditZod.validate(categoryEditable);
 		isAllowed && categoryEdit.mutate(categoryEditable);
 	};
 
+	/** It executes the category delete mutation */
 	const categoryDeleteAction = () => {
-		categoryDelete.mutate({ categoryId: categoryIdToDelete });
+		categoryDelete.mutate({ categoryId: categoryDeletable });
 	};
 
 	return (
@@ -201,7 +210,7 @@ const Categories = () => {
 							<Dialog.Root open={isDeleteModalOpen} onOpenChange={isOpen => setIsDeleteModalOpen(isOpen)}>
 								<Dialog.Trigger
 									className="bg-red-500 px-2 cursor-pointer"
-									onClick={() => setCategoryIdToDelete(category.id)}
+									onClick={() => setCategoryDeletable(category.id)}
 								>
 									x
 								</Dialog.Trigger>
@@ -246,7 +255,7 @@ const Categories = () => {
 							value={categoryEditable.name}
 							onChange={categoryEditHandler}
 						/>
-						<p className="text-xs text-red-500">{errors.name}</p>
+						<p className="text-xs text-red-500">{categoryEditZod.errors.name}</p>
 					</fieldset>
 					<fieldset className="flex flex-col space-y-2">
 						<label htmlFor="location">Location</label>
@@ -265,6 +274,7 @@ const Categories = () => {
 							isLoading={participantsIsLoading}
 							options={participantsAsOptions}
 							defaultValue={defaultParticipantOptions}
+							onChange={(opts) => setCategoryEditable({ ...categoryEditable, participantIds: opts.map(opt => opt.value) }) }
 							isSearchable
 							isMulti
 						/>
