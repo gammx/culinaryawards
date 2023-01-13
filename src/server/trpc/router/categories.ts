@@ -20,11 +20,14 @@ export const categoryRouter = router({
 	addNewCategory: adminProcedure
 		.input(categoryCreateSchema)
 		.mutation(async ({ ctx, input }) => {
-			const { name, location } = input;
+			const { name, location, participantIds } = input;
 			return await ctx.prisma.category.create({
 				data: {
 					name,
-					location
+					location,
+					participants: {
+						connect: participantIds.map((id) => ({ id })),
+					}
 				}
 			});
 		}),
