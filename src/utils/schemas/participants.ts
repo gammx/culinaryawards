@@ -12,3 +12,7 @@ export const participantCreateSchema = z.object({
 	website: z.string().nullable(),
 	mapsAnchor: z.string().nullable(),
 });
+
+export const participantEditSchema = participantCreateSchema.extend({
+	id: z.string(),
+});
