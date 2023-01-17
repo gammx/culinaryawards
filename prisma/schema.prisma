@@ -65,43 +65,37 @@ model VerificationToken {
 }
 
 model Category {
-  id           String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  location     String?
-  participants ParticipantsOnCategories[]
-  votes        Votes[]
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  location       String?
+  participantIds String[]      @db.ObjectId
+  participants   Participant[] @relation(fields: [participantIds], references: [id])
+  votes          Votes[]
 
   @@map("categories")
 }
 
 model Participant {
-  id         String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  thumbnail  String
-  categories ParticipantsOnCategories[]
-  votes      Votes[]
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  thumbnail   String
+  direction   String
+  website     String?    @default("#")
+  mapsAnchor  String?    @default("#")
+  categoryIds String[]   @db.ObjectId
+  categories  Category[] @relation(fields: [categoryIds], references: [id])
+  votes       Votes[]
 
   @@map("participants")
-}
-
-model ParticipantsOnCategories {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  participant   Participant @relation(fields: [participantId], references: [id])
-  category      Category    @relation(fields: [categoryId], references: [id])
-  participantId String
-  categoryId    String
-
-  @@unique([participantId, categoryId])
-  @@map("participants_on_categories")
 }
 
 model Votes {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   participant   Participant @relation(fields: [participantId], references: [id])
   category      Category    @relation(fields: [categoryId], references: [id])
-  participantId String
-  categoryId    String
-  
+  participantId String      @db.ObjectId
+  categoryId    String      @db.ObjectId
+
   @@unique([participantId, categoryId])
   @@map("votes")
 }

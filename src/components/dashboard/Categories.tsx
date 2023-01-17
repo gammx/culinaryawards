@@ -2,37 +2,51 @@ import { ChangeEventHandler, useState } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
 import Dialog from '../UI/Dialog';
+import Select from 'react-select';
 import useZod from '~/hooks/useZod';
-import { Category } from '@prisma/client';
+import type { Category } from '@prisma/client';
+import type { Option } from '~/utils/select';
 
 const Categories = () => {
+	const [participantsAsOptions, setParticipantsAsOptions] = useState<Option[]>([]);
+	const [defaultParticipantOptions, setDefaultParticipantOptions] = useState<Option[]>([]);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [categoryFormData, setCategoryFormData] = useState({
+	const [categoryCreatable, setCategoryCreatable] = useState({
 		name: '',
 		location: '',
+		participantIds: [] as string[],
 	});
-	const [categoryToEdit, setCategoryToEdit] = useState({
+	const [categoryEditable, setCategoryEditable] = useState({
 		id: '',
 		name: '',
 		location: '',
+		participantIds: []
 	} as Category);
-	const [categoryIdToDelete, setCategoryIdToDelete] = useState('');
+	const [categoryDeletable, setCategoryDeletable] = useState('');
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
 	const categoryEditZod = useZod(categoryEditSchema);
-	const allCategories = trpc.categories.getAllCategories.useQuery();
 	const utils = trpc.useContext();
+	const allCategories = trpc.categories.getAllCategories.useQuery();
+	const { data: participants, isLoading: participantsIsLoading } = trpc.participants.getAllParticipants.useQuery(undefined, {
+		onSuccess(data) {
+			setParticipantsAsOptions(data.map((participant) => ({
+				value: participant.id,
+				label: participant.name
+			})));
+		},
+	});
 	const categoryCreate = trpc.categories.addNewCategory.useMutation({
-		async onMutate({ name, location }) {
+		async onMutate(vars) {
 			await utils.categories.getAllCategories.cancel();
 			const prevData = utils.categories.getAllCategories.getData();
 			utils.categories.getAllCategories.setData(undefined,
-				(old) => old && [...old, { id: '-1', name, location }]
+				(old) => old && [...old, { ...vars, id: '-1' }]
 			);
 			setErrors({});
 			setIsCreateModalOpen(false);
-			clearCategoryFormData();
+			categoryFormClear();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -40,6 +54,8 @@ const Categories = () => {
 		},
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
+			// We're probably assigning this new category to some participants, so we need to invalidate the participants query
+			utils.participants.getAllParticipants.invalidate();
 		}
 	});
 	const categoryEdit = trpc.categories.editCategory.useMutation({
@@ -51,7 +67,7 @@ const Categories = () => {
 			);
 			categoryEditZod.setErrors({});
 			setIsEditModalOpen(false);
-			clearCategoryFormData();
+			categoryFormClear();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -59,6 +75,8 @@ const Categories = () => {
 		},
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
+			// We're probably assigning this category to some participants, so we need to invalidate the participants query
+			utils.participants.getAllParticipants.invalidate();
 		}
 	});
 	const categoryDelete = trpc.categories.deleteCategory.useMutation({
@@ -80,34 +98,50 @@ const Categories = () => {
 		}
 	});
 
-	const handleCategoryFormData: ChangeEventHandler<HTMLInputElement> = (event) => {
-		setCategoryFormData({ ...categoryFormData, [event.target.id]: event.target.value });
+	/** It clears both category forms */
+	const categoryFormClear = () => {
+		setCategoryCreatable({ name: '', location: '', participantIds: [] });
+		setCategoryEditable({ id: '', name: '', location: '', participantIds: [] });
 	};
 
-	const handleCategoryEditFormData: ChangeEventHandler<HTMLInputElement> = (event) => {
-		setCategoryToEdit({ ...categoryToEdit, [event.target.id]: event.target.value });
+	/** It handles the category create form updates */
+	const categoryCreateHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
+		setCategoryCreatable({ ...categoryCreatable, [event.target.id]: event.target.value });
 	};
 
-	const clearCategoryFormData = () => {
-		setCategoryFormData({ name: '', location: '' });
-		setCategoryToEdit({ id: '', name: '', location: '' });
+	/** It executes the category create mutation, validating the values first */
+	const categoryCreateAction = () => {
+		const isAllowed = validate(categoryCreatable);
+		isAllowed && categoryCreate.mutate(categoryCreatable);
 	};
 
-	const createCategory = () => {
-		// Validate on the client first
-		const isAllowed = validate(categoryFormData);
-		isAllowed && categoryCreate.mutate(categoryFormData);
+	/** It opens the category edit modal */
+	const categoryEditLink = (editable: Category) => {
+		setCategoryEditable(editable);
+		if (participants) {
+			setDefaultParticipantOptions(editable.participantIds.map((participantId) => {
+				const participant = participants.find((p) => p.id === participantId);
+				return { value: participant!.id, label: participant!.name };
+			}));
+		}
+		setIsEditModalOpen(true);
 	};
 
-	const editCategory = () => {
-		if (!categoryToEdit) return;
-		// Validate on the client first
-		const isAllowed = categoryEditZod.validate(categoryToEdit);
-		isAllowed && categoryEdit.mutate(categoryToEdit);
+	/** It handles the category edit form updates */
+	const categoryEditHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
+		setCategoryEditable({ ...categoryEditable, [event.target.id]: event.target.value });
 	};
 
-	const deleteCategory = () => {
-		categoryDelete.mutate({ categoryId: categoryIdToDelete });
+	/** It executes the category edit mutation, if the validation gets passed */
+	const categoryEditAction = () => {
+		if (!categoryEditable) return;
+		const isAllowed = categoryEditZod.validate(categoryEditable);
+		isAllowed && categoryEdit.mutate(categoryEditable);
+	};
+
+	/** It executes the category delete mutation */
+	const categoryDeleteAction = () => {
+		categoryDelete.mutate({ categoryId: categoryDeletable });
 	};
 
 	return (
@@ -130,8 +164,8 @@ const Categories = () => {
 									id="name"
 									type="text"
 									placeholder="Something crazy"
-									value={categoryFormData.name}
-									onChange={handleCategoryFormData}
+									value={categoryCreatable.name}
+									onChange={categoryCreateHandler}
 								/>
 								<p className="text-xs text-red-500">{errors.name}</p>
 							</fieldset>
@@ -141,15 +175,26 @@ const Categories = () => {
 									id="location"
 									type="text"
 									placeholder="Where?"
-									value={categoryFormData.location}
-									onChange={handleCategoryFormData}
+									value={categoryCreatable.location}
+									onChange={categoryCreateHandler}
 								/>
+							</fieldset>
+							<fieldset className="flex flex-col space-y-2">
+								<label htmlFor="participants">Participants</label>
+								<Select
+									id="participants"
+									isLoading={participantsIsLoading}
+									options={participantsAsOptions}
+									onChange={(opts) => setCategoryCreatable({ ...categoryCreatable, participantIds: opts.map(option => option.value) })}
+									isSearchable
+									isMulti
+								></Select>
 							</fieldset>
 						</div>
 						<Dialog.Actions>
 							<button
 								className="bg-green-500 px-2 py-2 rounded mr-2 text-xs uppercase"
-								onClick={createCategory}
+								onClick={categoryCreateAction}
 							>
 								Add
 							</button>
@@ -165,7 +210,7 @@ const Categories = () => {
 							<Dialog.Root open={isDeleteModalOpen} onOpenChange={isOpen => setIsDeleteModalOpen(isOpen)}>
 								<Dialog.Trigger
 									className="bg-red-500 px-2 cursor-pointer"
-									onClick={() => setCategoryIdToDelete(category.id)}
+									onClick={() => setCategoryDeletable(category.id)}
 								>
 									x
 								</Dialog.Trigger>
@@ -176,7 +221,7 @@ const Categories = () => {
 									<Dialog.Actions>
 										<button
 											className="bg-red-500 px-2 py-2 rounded mr-2 text-xs uppercase"
-											onClick={deleteCategory}
+											onClick={categoryDeleteAction}
 										>
 											Delete
 										</button>
@@ -185,10 +230,7 @@ const Categories = () => {
 							</Dialog.Root>
 							<button
 								className="bg-yellow-500 px-2 cursor-pointer"
-								onClick={() => {
-									setCategoryToEdit(category);
-									setIsEditModalOpen(true);
-								}}
+								onClick={() => categoryEditLink(category)}
 							>
 								~
 							</button>
@@ -210,10 +252,10 @@ const Categories = () => {
 							id="name"
 							type="text"
 							placeholder="Something crazy"
-							value={categoryToEdit.name}
-							onChange={handleCategoryEditFormData}
+							value={categoryEditable.name}
+							onChange={categoryEditHandler}
 						/>
-						<p className="text-xs text-red-500">{errors.name}</p>
+						<p className="text-xs text-red-500">{categoryEditZod.errors.name}</p>
 					</fieldset>
 					<fieldset className="flex flex-col space-y-2">
 						<label htmlFor="location">Location</label>
@@ -221,14 +263,26 @@ const Categories = () => {
 							id="location"
 							type="text"
 							placeholder="Where?"
-							value={categoryToEdit.location ?? ''}
-							onChange={handleCategoryEditFormData}
+							value={categoryEditable.location || ''}
+							onChange={categoryEditHandler}
+						/>
+					</fieldset>
+					<fieldset className="flex flex-col space-y-2">
+						<label htmlFor="participants">Participants</label>
+						<Select
+							id="participants"
+							isLoading={participantsIsLoading}
+							options={participantsAsOptions}
+							defaultValue={defaultParticipantOptions}
+							onChange={(opts) => setCategoryEditable({ ...categoryEditable, participantIds: opts.map(opt => opt.value) }) }
+							isSearchable
+							isMulti
 						/>
 					</fieldset>
 					<Dialog.Actions>
 						<button
 							className="bg-yellow-500 px-2 py-2 rounded mr-2 text-xs uppercase"
-							onClick={editCategory}
+							onClick={categoryEditAction}
 						>
 							Edit
 						</button>
