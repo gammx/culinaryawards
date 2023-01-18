@@ -1,6 +1,7 @@
 import { useSession } from 'next-auth/react';
-import Categories from '~/components/dashboard/Categories';
-import Participants from '~/components/dashboard/Participants';
+import ParticipantsCard from '~/components/dashboard/ParticipantsCard';
+import CategoriesCard from '~/components/dashboard/CategoriesCard';
+import ActivityCard from '~/components/dashboard/ActivityCard';
 import withAdminSession from '~/hoc/withAdminSession';
 
 const Dashboard = () => {
@@ -15,14 +16,16 @@ const Dashboard = () => {
 				<div className="border basis-9/12"></div>
 			</div>
 			<div className="flex basis-7/12">
-				<div className="border basis-3/12"></div>
-				<div className="border basis-6/12"></div>
-				<div className="border basis-3/12"></div>
+				<section className="basis-3/12">
+					<ParticipantsCard />
+				</section>
+				<section className="basis-6/12">
+					<ActivityCard />
+				</section>
+				<section className="basis-3/12">
+					<CategoriesCard />
+				</section>
 			</div>
-			{/*<p>This page is protected {user.email}</p>
-			<Categories />
-			<Participants />*/}
-
 		</div>
 	);
 };
