@@ -19,6 +19,8 @@ module.exports = {
         'green-muted': '#C8F0E7',
         'pink': '#FF3CC8',
         'pink-muted': '#FBE5FF',
+        'red': '#FC3364',
+        'red-muted': '#FFEDED',
       }
     },
   },

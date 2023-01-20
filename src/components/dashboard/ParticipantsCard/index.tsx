@@ -124,6 +124,8 @@ const ParticipantsCard = () => {
 			utils.participants.getAllParticipants.setData(undefined,
 				(old) => old && old.filter((participant) => participant.id !== dto.participantId)
 			);
+			views.goBack();
+			setCardTab('info');
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -148,8 +150,8 @@ const ParticipantsCard = () => {
 	}, [participantTarget]);
 
 	/** It executes the delete mutation */
-	const participantDeleteAction = async (participantId: string) => {
-		participantDelete.mutate({ participantId });
+	const participantDeleteAction = () => {
+		participantTarget && participantDelete.mutate({ participantId: participantTarget.id });
 	};
 
 	/** It clears the create participant form */
@@ -349,11 +351,11 @@ const ParticipantsCard = () => {
 					<DataCard.Content>
 						{cardTab !== 'edit' && (
 							<div className="my-4 relative">
-								<img src={participantTarget.thumbnail} alt={`${participantTarget.name} (Thumbnail)`} className="w-20 h-20 rounded-circle" />
+								<img src={participantTarget.thumbnail} alt={`${participantTarget.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 							</div>
 						)}
 						<DataCard.Tabs state={[cardTab, onTabChange]}>
-							{/** PARTICIPANT INFO -------------- */}
+							{/** PARTICIPANT INFO ----------------------------------------- */}
 							<DataCard.Tab value="info">
 								{participantTarget.website && <DataCard.Anchor href={participantTarget.website} />}
 								{participantTarget.mapsAnchor && <DataCard.Anchor icon="maps" href={participantTarget.mapsAnchor} />}
@@ -371,6 +373,7 @@ const ParticipantsCard = () => {
 									</div>
 								</div>
 							</DataCard.Tab>
+							{/** PARTICIPANT EDIT ----------------------------------------- */}
 							<DataCard.Tab value="edit" className="px-8">
 								<fieldset>
 									<label htmlFor="thumbnail">Picture</label>
@@ -454,6 +457,20 @@ const ParticipantsCard = () => {
 										Cancel
 									</button>
 								</div>
+							</DataCard.Tab>
+							{/** PARTICIPANT DELETE ----------------------------------------- */}
+							<DataCard.Tab value="delete" className="px-8">
+								<fieldset className="h-full">
+									<label>Delete Participant</label>
+									<p className="text-sm">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
+									<br />
+									<button
+										className="bg-red-muted hover:bg-red-muted/70 text-red py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+										onClick={participantDeleteAction}
+									>
+										Delete
+									</button>
+								</fieldset>
 							</DataCard.Tab>
 						</DataCard.Tabs>
 					</DataCard.Content>
