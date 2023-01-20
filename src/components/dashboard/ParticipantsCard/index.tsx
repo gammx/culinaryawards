@@ -75,7 +75,7 @@ const ParticipantsCard = () => {
 				(old) => old && [...old, { ...vars, id: '-1', categoryIds: [] }]
 			);
 			setErrors({});
-			setIsCreateModalOpen(false);
+			views.goBack();
 			participantCreateClear();
 			return { prevData };
 		},
@@ -199,6 +199,13 @@ const ParticipantsCard = () => {
 		setCardTab(tab);
 	};
 
+	/** It cancels the add participant action */
+	const cancelParticipantAdd = () => {
+		views.go('list');
+		setErrors({});
+		participantCreateClear();
+	};
+
 	return (
 		<>
 			{views.current === 'list' && (
@@ -206,7 +213,11 @@ const ParticipantsCard = () => {
 					<div className="flex justify-between items-center mb-4">
 						<h1 className="font-medium text-2xl">Participants</h1>
 						<div className="flex space-x-5">
-							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
+							<div
+								role="button"
+								className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white"
+								onClick={() => views.go('add')}
+							>
 								<PlusOutline size={18} />
 							</div>
 							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
@@ -230,7 +241,7 @@ const ParticipantsCard = () => {
 									className="flex space-x-4 items-center"
 									onClick={() => goToProfile(participant)}
 								>
-									<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} width={24} className="rounded-circle" />
+									<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
 									<span>{participant.name}</span>
 								</li>
 							))
@@ -238,6 +249,94 @@ const ParticipantsCard = () => {
 					</ul>
 				</div>
 			)}
+
+			{views.current === 'add' && (
+				<DataCard.Root className="border-r border-r-white/20">
+					<DataCard.Header
+						title="Add Participant"
+						onBack={cancelParticipantAdd}
+					></DataCard.Header>
+					<DataCard.Content className="px-8 h-full w-full overflow-y-auto">
+						<div className="w-full">
+							<fieldset >
+								<label htmlFor="thumbnail">Picture *</label>
+								<input ref={creatableFileRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={creatableFileUpload} className="hidden" />
+								<div className="pb-4 flex justify-center">
+									<img src={participantCreatable.thumbnail || '/default_pfp.png'} alt={`${participantCreatable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
+								</div>
+								<button
+									className="bg-white/30 hover:bg-white/40 text-gray-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+									onClick={() => creatableFileRef.current?.click()}
+								>
+									Upload
+								</button>
+								{errors.thumbnail && <span className="text-red-500 text-sm">{errors.thumbnail}</span>}
+							</fieldset>
+							<fieldset>
+								<label htmlFor="name">Name *</label>
+								<input
+									id="name"
+									type="text"
+									value={participantCreatable.name}
+									onChange={participantCreateHandler}
+								/>
+								{errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
+							</fieldset>
+							<fieldset>
+								<label htmlFor="direction">Direction *</label>
+								<input
+									id="direction"
+									type="text"
+									value={participantCreatable.direction}
+									onChange={participantCreateHandler}
+								/>
+								{errors.direction && <span className="text-red-500 text-sm">{errors.direction}</span>}
+							</fieldset>
+							<fieldset>
+								<label htmlFor="website">Website</label>
+								<input
+									id="website"
+									type="text"
+									value={participantCreatable.website}
+									onChange={participantCreateHandler}
+									placeholder="https://..."
+								/>
+							</fieldset>
+							<fieldset>
+								<label htmlFor="mapsAnchor">Google Maps URL</label>
+								<input
+									id="mapsAnchor"
+									type="text"
+									value={participantCreatable.mapsAnchor}
+									onChange={participantCreateHandler}
+									placeholder="https://www.google.com/maps/place/..."
+								/>
+							</fieldset>
+							<fieldset>
+								<label htmlFor="categories">Categories</label>
+								<Select
+									id="categories"
+									isLoading={isCategoriesLoading}
+									options={categoriesAsOptions}
+									onChange={(values) => setParticipantCreatable(prev => ({ ...prev, categories: values.map(e => e.value) }))}
+									isMulti
+									isSearchable
+									menuPlacement={'auto'}
+									className="react-select-container"
+									classNamePrefix="react-select"
+								/>
+							</fieldset>
+							<button
+								className="bg-green-muted hover:bg-green-muted/70 text-green py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+								onClick={participantCreateAction}
+							>
+								Add
+							</button>
+						</div>
+					</DataCard.Content>
+				</DataCard.Root>
+			)}
+
 			{views.current === 'profile' && participantTarget && (
 				<DataCard.Root className="border-r border-r-white/20">
 					<DataCard.Header
@@ -272,9 +371,9 @@ const ParticipantsCard = () => {
 									</div>
 								</div>
 							</DataCard.Tab>
-							<DataCard.Tab value="edit" className="px-8 h-full overflow-y-auto max-h-[21.6rem]">
+							<DataCard.Tab value="edit" className="px-8">
 								<fieldset>
-									<label htmlFor="">Picture</label>
+									<label htmlFor="thumbnail">Picture</label>
 									<input ref={editableFileRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={editableFileUpload} className="hidden" />
 									<div className="pb-6 relative">
 										<img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />

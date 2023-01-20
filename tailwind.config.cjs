@@ -15,8 +15,8 @@ module.exports = {
         'blue-muted': '#CCEAFF',
         'yellow': '#FFB800',
         'yellow-muted': '#FFF5D3',
-        'green': '#00FFB2',
-        'green-muted': '#001612',
+        'green': '#00C696',
+        'green-muted': '#C8F0E7',
         'pink': '#FF3CC8',
         'pink-muted': '#FBE5FF',
       }

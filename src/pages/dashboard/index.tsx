@@ -15,7 +15,7 @@ const Dashboard = () => {
 				<div className="border basis-1/12"></div>
 				<div className="border basis-9/12"></div>
 			</div>
-			<div className="flex basis-7/12">
+			<div className="flex basis-7/12" id="cards-row">
 				<section className="basis-3/12">
 					<ParticipantsCard />
 				</section>

@@ -12,8 +12,8 @@ const DataCardTabs: React.FC<DataCardTabsProps> = ({
 	children,
 }) => {
 	return (
-		<Tabs.Root value={value} onValueChange={setValue} defaultValue="info" className="flex flex-col w-full h-full">
-			<Tabs.List className="flex justify-between px-8">
+		<Tabs.Root value={value} onValueChange={setValue} defaultValue="info" className="relative flex flex-col w-full h-full">
+			<Tabs.List className="w-full flex justify-between px-8">
 				<Tabs.Trigger value="info" className="flex items-center justify-center h-12 group">
 					<MenuOutline size={24} className="text-black/30 group-data-[state=active]:text-black" />
 				</Tabs.Trigger>

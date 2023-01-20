@@ -1,9 +1,7 @@
 import React, { FC, HTMLAttributes } from 'react';
-import Modal from 'react-modal';
 import DataCardHeader from './DataCardHeader';
 import DataCardTabs from './DataCardTabs';
 import DataCardAnchor from './DataCardAnchor';
-import { CloseOutline } from '@styled-icons/evaicons-outline';
 import { TabsContent } from '@radix-ui/react-tabs';
 import cs from './DataCard.module.css';
 import cn from 'classnames';
@@ -16,15 +14,20 @@ const DataCardRoot: FC<DataCardRootProps> = ({
 	...props
 }) => {
 	return (
-		<div className={cn(cs.Wrapper, className, "h-full py-9")} {...props}>
+		<div className={cn(cs.Wrapper, className, "h-full py-9 DataCard")} {...props}>
 			{children}
 		</div>
 	);
 };
 
-const DataCardContent: FC<HTMLAttributes<HTMLDivElement>> = ({ children, className, ...props }) => {
+const DataCardContent: FC<HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => {
+	const contentRef = React.useRef<HTMLDivElement>(null);
 	return (
-		<div className={cn(className, "flex flex-col items-center")}>{children}</div>
+		<div
+			ref={contentRef}
+			className={cn(className, "flex flex-col items-center max-h-[26.6rem] overflow-y-auto")}
+			{...props}
+		/>
 	);
 };
 

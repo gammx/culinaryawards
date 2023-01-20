@@ -15,7 +15,7 @@ const DataCardHeader: React.FC<DataCardHeaderProps> = ({
 	children,
 }) => {
 	return (
-		<div className="flex justify-between items-center mb-4 px-8">
+		<div className="top-0 sticky flex justify-between items-center mb-4 px-8">
 			<div className="flex items-center space-x-5">
 				{onBack && (
 					<div
