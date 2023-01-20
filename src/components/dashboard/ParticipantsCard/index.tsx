@@ -1,15 +1,20 @@
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
 import { trpc } from '~/utils/trpc';
-import { PlusOutline, FunnelOutline, ArrowUpwardOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, ArrowUpwardOutline, ArrowBackOutline, HashOutline } from '@styled-icons/evaicons-outline';
 import Dialog from '~/components/UI/Dialog';
+import DataCardTabs from '../DataCard/DataCardTabs';
+import DataCardAnchor from '../DataCard/DataCardAnchor';
 import Modal from '~/components/UI/Modal';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
 import useUploadImage from '~/utils/useUploadImage';
 import cs from './ParticipantsCard.module.css';
 import cn from 'classnames';
+import Participants from '../Participants';
+import DataCard from '../DataCard';
+import useViews from '~/utils/useViews';
 
 interface Option {
 	label: string;
@@ -17,13 +22,25 @@ interface Option {
 }
 
 const ParticipantsCard = () => {
+	const views = useViews('list');
 	const utils = trpc.useContext();
-	const allParticipants = trpc.participants.getAllParticipants.useQuery();
+	const { data: participants, refetch: refetchParticipants } = trpc.participants.getAllParticipants.useQuery(undefined, {
+		onSuccess(data) {
+			if (data && participantTarget) {
+				const target = data.find((participant) => participant.id === participantTarget.id);
+				target && setParticipantTarget(target);
+			}
+		},
+	});
 	const { validate, errors, setErrors } = useZod(participantCreateSchema);
 	// These are the award categories displayed as options in the participant forms
 	const [categoriesAsOptions, setCategoriesAsOptions] = useState<Option[]>([]);
 	const [defaultOptions, setDefaultOptions] = useState<Option[]>([]);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [isParticipantModalOpen, setIsParticipantModalOpen] = useState(false);
+	const [isEditingParticipant, setIsEditingParticipant] = useState(false);
+	const [cardTab, setCardTab] = useState('info');
+	const [participantTarget, setParticipantTarget] = useState<Participant | null>(null);
 	const [participantCreatable, setParticipantCreatable] = useState({
 		name: '',
 		direction: '',
@@ -72,20 +89,31 @@ const ParticipantsCard = () => {
 	const participantEdit = trpc.participants.editParticipant.useMutation({
 		async onMutate(vars) {
 			// Prepare for optimistic update
-			await utils.participants.getAllParticipants.invalidate();
+			await utils.participants.getAllParticipants.cancel();
 			const prevData = utils.participants.getAllParticipants.getData();
+			let prevParticipant = {} as Participant;
+			setParticipantTarget({ ...vars, categoryIds: vars.categories })
 			utils.participants.getAllParticipants.setData(undefined,
-				(old) => old && old.map((participant) => participant.id === vars.id ? { ...participant, ...vars } : participant)
+				(old) => old && old.map((participant) => {
+					if (participant.id === vars.id) {
+						prevParticipant = participant;
+						return { ...participant, ...vars };
+					}
+					return participant;
+				})
 			);
 			setErrors({});
-			setIsEditModalOpen(false);
-			return { prevData };
+			setCardTab('info');
+			return { prevData, prevParticipant };
 		},
 		onError(err, vars, ctx) {
-			ctx && utils.participants.getAllParticipants.setData(undefined, ctx.prevData);
+			if (ctx) {
+				utils.participants.getAllParticipants.setData(undefined, ctx.prevData);
+				setParticipantTarget(ctx.prevParticipant);
+			}
 		},
 		onSettled() {
-			utils.participants.getAllParticipants.invalidate();
+			refetchParticipants();
 		}
 	});
 	const participantDelete = trpc.participants.deleteParticipant.useMutation({
@@ -105,6 +133,19 @@ const ParticipantsCard = () => {
 			utils.participants.getAllParticipants.invalidate();
 		}
 	});
+
+	useEffect(() => {
+		if (!participantTarget || !categories) return;
+
+		setParticipantEditable(participantTarget);
+		setDefaultOptions(participantTarget.categoryIds.map((id) => {
+			const category = categories.find((category) => category.id === id);
+			return {
+				label: category!.name,
+				value: category!.id,
+			};
+		}));
+	}, [participantTarget]);
 
 	/** It executes the delete mutation */
 	const participantDeleteAction = async (participantId: string) => {
@@ -138,19 +179,10 @@ const ParticipantsCard = () => {
 		}));
 	};
 
-	/** It opens the edit participant modal */
-	const participantEditLink = (editable: Participant) => {
-		setParticipantEditable(editable);
-		if (categories) {
-			setDefaultOptions(editable.categoryIds.map((id) => {
-				const category = categories.find((category) => category.id === id);
-				return {
-					label: category!.name,
-					value: category!.id,
-				};
-			}));
-		}
-		setIsEditModalOpen(true);
+	/** It opens a participant profile */
+	const goToProfile = (editable: Participant) => {
+		setParticipantTarget(editable);
+		views.go('profile');
 	};
 
 	/** It executes the edit mutation if the introduced values are valid */
@@ -160,26 +192,153 @@ const ParticipantsCard = () => {
 		isAllowed && participantEdit.mutate({ ...editable, categories: categoryIds });
 	};
 
+	/** Callback to execute when user moves between tabs */
+	const onTabChange = (tab: string) => {
+		participantTarget && setParticipantEditable(participantTarget);
+		setCardTab(tab);
+	};
+
 	return (
-		<div className={cn(cs.Wrapper, 'h-full text-white py-9 px-8 border-r border-r-white/20')}>
-			<div className="flex justify-between items-center mb-4">
-				<h1 className="font-medium text-2xl">Participants</h1>
-				<div className="flex space-x-5">
-					<div role="button" className="border border-[#D3E7EE] rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<PlusOutline size={18} className="fill-[#4B6E7A]" />
+		<>
+			{views.current === 'list' && (
+				<div className={cn(cs.Wrapper, 'h-full py-9 px-8 border-r border-r-white/20')}>
+					<div className="flex justify-between items-center mb-4">
+						<h1 className="font-medium text-2xl">Participants</h1>
+						<div className="flex space-x-5">
+							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
+								<PlusOutline size={18} />
+							</div>
+							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
+								<FunnelOutline size={18} />
+							</div>
+							<ArrowUpwardOutline size={24} className="rotate-45" />
+						</div>
 					</div>
-					<div role="button" className="border border-[#D3E7EE] rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<FunnelOutline size={18} className="fill-[#4B6E7A]" />
-					</div>
-					<ArrowUpwardOutline size={24} className="fill-[#4B6E7A] rotate-45" />
+					<input
+						type="text"
+						placeholder="Search"
+						className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 mb-4 text-sm"
+					/>
+					<ul
+						className="flex flex-col space-y-4"
+					>
+						{participants && participants.length > 0 &&
+							participants.map((participant) => (
+								<li
+									key={participant.id}
+									className="flex space-x-4 items-center"
+									onClick={() => goToProfile(participant)}
+								>
+									<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} width={24} className="rounded-circle" />
+									<span>{participant.name}</span>
+								</li>
+							))
+						}
+					</ul>
 				</div>
-			</div>
-			<input
-				type="text"
-				placeholder="Search"
-				className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 text-black text-sm"
-			/>
-		</div>
+			)}
+			{views.current === 'profile' && participantTarget && (
+				<DataCard.Root className="border-r border-r-white/20">
+					<DataCard.Header
+						title={participantTarget.name}
+						onBack={() => {
+							setParticipantTarget(null);
+							views.goBack();
+						}}
+					></DataCard.Header>
+					<DataCard.Content>
+						{cardTab !== 'edit' && (
+							<div className="my-4 relative">
+								<img src={participantTarget.thumbnail} alt={`${participantTarget.name} (Thumbnail)`} className="w-20 h-20 rounded-circle" />
+							</div>
+						)}
+						<DataCard.Tabs state={[cardTab, onTabChange]}>
+							{/** PARTICIPANT INFO -------------- */}
+							<DataCard.Tab value="info">
+								{participantTarget.website && <DataCard.Anchor href={participantTarget.website} />}
+								{participantTarget.mapsAnchor && <DataCard.Anchor icon="maps" href={participantTarget.mapsAnchor} />}
+								<div className="ml-8 mt-8 flex">
+									<div className="rounded-lg flex items-center justify-center w-6 h-6 mr-8 bg-pink-muted">
+										<HashOutline className="text-pink" size={18} />
+									</div>
+									<div className="flex flex-col space-y-2">
+										<p className="font-medium">Categories</p>
+										<ul className="text-sm">
+											{categories && categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
+												<li key={category.id}>{category.name}</li>
+											))}
+										</ul>
+									</div>
+								</div>
+							</DataCard.Tab>
+							<DataCard.Tab value="edit" className="px-8 h-full overflow-y-auto max-h-[21.6rem]">
+								<fieldset>
+									<label htmlFor="">Picture</label>
+									<input ref={editableFileRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={editableFileUpload} className="hidden" />
+									<div className="pb-6 relative">
+										<img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
+									</div>
+									<button
+										className="bg-white/30 hover:bg-white/40 text-gray-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+										onClick={() => editableFileRef.current?.click()}
+									>
+										Upload
+									</button>
+								</fieldset>
+								<fieldset>
+									<label htmlFor="name">Name</label>
+									<input
+										id="name"
+										type="text"
+										value={participantEditable.name}
+										onChange={participantEditHandler}
+									/>
+								</fieldset>
+								<fieldset>
+									<label htmlFor="website">Website</label>
+									<input
+										id="website"
+										type="text"
+										value={participantEditable.website || ''}
+										onChange={participantEditHandler}
+									/>
+								</fieldset>
+								<fieldset>
+									<label htmlFor="mapsAnchor">Google Maps URL</label>
+									<input
+										id="mapsAnchor"
+										type="text"
+										value={participantEditable.mapsAnchor || ''}
+										onChange={participantEditHandler}
+									/>
+								</fieldset>
+								<fieldset>
+									<label htmlFor="categories">Categories</label>
+									<Select
+										id="categories"
+										isLoading={isCategoriesLoading}
+										options={categoriesAsOptions}
+										defaultValue={defaultOptions}
+										onChange={(values) => setParticipantEditable(prev => ({ ...prev, categoryIds: values.map(e => e.value) }))}
+										isMulti
+										isSearchable
+										menuPlacement={'auto'}
+										className="react-select-container"
+										classNamePrefix="react-select"
+									/>
+								</fieldset>
+								<button
+									className="bg-blue-muted hover:bg-blue-muted/70 text-blue py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+									onClick={participantEditAction}
+								>
+									Save
+								</button>
+							</DataCard.Tab>
+						</DataCard.Tabs>
+					</DataCard.Content>
+				</DataCard.Root>
+			)}
+		</>
 	);
 };
 

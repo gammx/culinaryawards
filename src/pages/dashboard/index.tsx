@@ -10,7 +10,7 @@ const Dashboard = () => {
 
 	return (
 		<div className="bg-black flex flex-col w-full h-screen">
-			<div className="flex flex-col flex-1">
+			<div className="flex flex-col basis-5/12 shrink-0">
 				<div className="border basis-2/12"></div>
 				<div className="border basis-1/12"></div>
 				<div className="border basis-9/12"></div>

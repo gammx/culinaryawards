@@ -148,17 +148,17 @@ const Categories = () => {
 	};
 
 	return (
-		<div className={cn(cs.Wrapper, 'h-full text-white py-9 px-8 border-l border-l-white/20')}>
+		<div className={cn(cs.Wrapper, 'h-full py-9 px-8 border-l border-l-white/20')}>
 			<div className="flex justify-between items-center mb-4">
 				<h1 className="font-medium text-2xl">Categories</h1>
 				<div className="flex space-x-5">
-					<div role="button" className="border border-[#D3E7EE] rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<PlusOutline size={18} className="fill-[#4B6E7A]" />
+					<div role="button" className="border border-white/40 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
+						<PlusOutline size={18} />
 					</div>
-					<div role="button" className="border border-[#D3E7EE] rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<FunnelOutline size={18} className="fill-[#4B6E7A]" />
+					<div role="button" className="border border-white/40 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
+						<FunnelOutline size={18} />
 					</div>
-					<ArrowUpwardOutline size={24} className="fill-[#4B6E7A] rotate-45" />
+					<ArrowUpwardOutline size={24} className="rotate-45" />
 				</div>
 			</div>
 			<input
