@@ -92,7 +92,7 @@ const ParticipantsCard = () => {
 			await utils.participants.getAllParticipants.cancel();
 			const prevData = utils.participants.getAllParticipants.getData();
 			let prevParticipant = {} as Participant;
-			setParticipantTarget({ ...vars, categoryIds: vars.categories })
+			setParticipantTarget({ ...vars, categoryIds: vars.categories });
 			utils.participants.getAllParticipants.setData(undefined,
 				(old) => old && old.map((participant) => {
 					if (participant.id === vars.id) {
@@ -195,6 +195,7 @@ const ParticipantsCard = () => {
 	/** Callback to execute when user moves between tabs */
 	const onTabChange = (tab: string) => {
 		participantTarget && setParticipantEditable(participantTarget);
+		setErrors({});
 		setCardTab(tab);
 	};
 
@@ -284,6 +285,7 @@ const ParticipantsCard = () => {
 									>
 										Upload
 									</button>
+									{errors.thumbnail && <p className="text-xs text-red-500 mt-2">{errors.thumbnail}</p>}
 								</fieldset>
 								<fieldset>
 									<label htmlFor="name">Name</label>
@@ -293,6 +295,17 @@ const ParticipantsCard = () => {
 										value={participantEditable.name}
 										onChange={participantEditHandler}
 									/>
+									{errors.name && <p className="text-xs text-red-500 mt-2">{errors.name}</p>}
+								</fieldset>
+								<fieldset>
+									<label htmlFor="direction">Direction</label>
+									<input
+										id="direction"
+										type="text"
+										value={participantEditable.direction || ''}
+										onChange={participantEditHandler}
+									/>
+									{errors.direction && <p className="text-xs text-red-500 mt-2">{errors.direction}</p>}
 								</fieldset>
 								<fieldset>
 									<label htmlFor="website">Website</label>
@@ -326,13 +339,22 @@ const ParticipantsCard = () => {
 										className="react-select-container"
 										classNamePrefix="react-select"
 									/>
+									{errors.categories && <p className="text-xs text-red-500 mt-2">{errors.categories}</p>}
 								</fieldset>
-								<button
-									className="bg-blue-muted hover:bg-blue-muted/70 text-blue py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-									onClick={participantEditAction}
-								>
-									Save
-								</button>
+								<div className="flex space-x-2">
+									<button
+										className="bg-blue-muted hover:bg-blue-muted/70 text-blue py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+										onClick={participantEditAction}
+									>
+										Save
+									</button>
+									<button
+										className="bg-white/30 hover:bg-white/40 text-neutral-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
+										onClick={() => onTabChange('info')}
+									>
+										Cancel
+									</button>
+								</div>
 							</DataCard.Tab>
 						</DataCard.Tabs>
 					</DataCard.Content>
