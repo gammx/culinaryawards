@@ -2,6 +2,7 @@ import React, { FC, HTMLAttributes } from 'react';
 import DataCardHeader from './DataCardHeader';
 import DataCardTabs from './DataCardTabs';
 import DataCardAnchor from './DataCardAnchor';
+import DataCardTitleBar from './DataCardTitleBar';
 import { TabsContent } from '@radix-ui/react-tabs';
 import cs from './DataCard.module.css';
 import cn from 'classnames';
@@ -25,7 +26,7 @@ const DataCardContent: FC<HTMLAttributes<HTMLDivElement>> = ({ className, ...pro
 	return (
 		<div
 			ref={contentRef}
-			className={cn(className, "flex flex-col items-center max-h-[26.6rem] overflow-y-auto")}
+			className={cn(className, "flex flex-col max-h-[26.6rem] overflow-y-auto")}
 			{...props}
 		/>
 	);
@@ -38,4 +39,5 @@ export default {
 	Tabs: DataCardTabs,
 	Tab: TabsContent,
 	Anchor: DataCardAnchor,
+	TitleBar: DataCardTitleBar,
 };

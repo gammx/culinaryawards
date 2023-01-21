@@ -211,10 +211,11 @@ const ParticipantsCard = () => {
 	return (
 		<>
 			{views.current === 'list' && (
-				<div className={cn(cs.Wrapper, 'h-full py-9 px-8 border-r border-r-white/20')}>
-					<div className="flex justify-between items-center mb-4">
-						<h1 className="font-medium text-2xl">Participants</h1>
-						<div className="flex space-x-5">
+				<DataCard.Root className="border-r border-r-white/20">
+					<DataCard.Header>
+						<DataCard.TitleBar
+							title="Participants"
+						>
 							<div
 								role="button"
 								className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white"
@@ -225,38 +226,44 @@ const ParticipantsCard = () => {
 							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
 								<FunnelOutline size={18} />
 							</div>
+						</DataCard.TitleBar>
+						<div className="px-8">
+							<input
+								type="text"
+								placeholder="Search"
+								className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 mb-4 text-sm"
+							/>
 						</div>
-					</div>
-					<input
-						type="text"
-						placeholder="Search"
-						className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 mb-4 text-sm"
-					/>
-					<ul
-						className="flex flex-col space-y-1"
-					>
-						{participants && participants.length > 0 &&
-							participants.map((participant) => (
-								<li
-									key={participant.id}
-									className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
-									onClick={() => goToProfile(participant)}
-								>
-									<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
-									<span>{participant.name}</span>
-								</li>
-							))
-						}
-					</ul>
-				</div>
+					</DataCard.Header>
+					<DataCard.Content className="px-8">
+						<ul
+							className="flex flex-col space-y-1"
+						>
+							{participants && participants.length > 0 &&
+								participants.map((participant) => (
+									<li
+										key={participant.id}
+										className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
+										onClick={() => goToProfile(participant)}
+									>
+										<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
+										<span>{participant.name}</span>
+									</li>
+								))
+							}
+						</ul>
+					</DataCard.Content>
+				</DataCard.Root>
 			)}
 
 			{views.current === 'add' && (
 				<DataCard.Root className="border-r border-r-white/20">
-					<DataCard.Header
-						title="Add Participant"
-						onBack={cancelParticipantAdd}
-					></DataCard.Header>
+					<DataCard.Header>
+						<DataCard.TitleBar
+							title="Add Participant"
+							onBack={cancelParticipantAdd}
+						></DataCard.TitleBar>
+					</DataCard.Header>
 					<DataCard.Content className="px-8 h-full w-full overflow-y-auto">
 						<div className="w-full">
 							<fieldset >
@@ -340,19 +347,16 @@ const ParticipantsCard = () => {
 
 			{views.current === 'profile' && participantTarget && (
 				<DataCard.Root className="border-r border-r-white/20">
-					<DataCard.Header
-						title={participantTarget.name}
-						onBack={() => {
-							setParticipantTarget(null);
-							views.goBack();
-						}}
-					></DataCard.Header>
+					<DataCard.Header>
+						<DataCard.TitleBar
+							title={participantTarget.name}
+							onBack={() => {
+								setParticipantTarget(null);
+								views.goBack();
+							}}
+						></DataCard.TitleBar>
+					</DataCard.Header>
 					<DataCard.Content>
-						{cardTab !== 'edit' && (
-							<div className="my-4 relative">
-								<img src={participantTarget.thumbnail} alt={`${participantTarget.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
-							</div>
-						)}
 						<DataCard.Tabs state={[cardTab, onTabChange]}>
 							{/** PARTICIPANT INFO ----------------------------------------- */}
 							<DataCard.Tab value="info">
