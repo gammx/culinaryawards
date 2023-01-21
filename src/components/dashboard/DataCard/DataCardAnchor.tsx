@@ -23,7 +23,9 @@ const DataCardAnchor: React.FC<DataCardAnchorProps> = ({
 				{icon === 'maps' && <Globe2Outline size={18} className="text-yellow" />}
 			</div>
 			<p className="flex-1 text-sm">{children || href}</p>
-			<ExternalLinkOutline role="button" className="text-black/30 hover:text-black" size={18} />
+			<a href={href} target="_blank">
+				<ExternalLinkOutline role="button" className="text-black/30 hover:text-black" size={18} />
+			</a>
 		</div>
 	);
 };

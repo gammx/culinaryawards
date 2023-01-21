@@ -225,7 +225,6 @@ const ParticipantsCard = () => {
 							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
 								<FunnelOutline size={18} />
 							</div>
-							<ArrowUpwardOutline size={24} className="rotate-45" />
 						</div>
 					</div>
 					<input
@@ -234,13 +233,13 @@ const ParticipantsCard = () => {
 						className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 mb-4 text-sm"
 					/>
 					<ul
-						className="flex flex-col space-y-4"
+						className="flex flex-col space-y-1"
 					>
 						{participants && participants.length > 0 &&
 							participants.map((participant) => (
 								<li
 									key={participant.id}
-									className="flex space-x-4 items-center"
+									className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
 									onClick={() => goToProfile(participant)}
 								>
 									<img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />

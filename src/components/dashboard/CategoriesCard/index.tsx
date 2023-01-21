@@ -158,7 +158,6 @@ const Categories = () => {
 					<div role="button" className="border border-white/40 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
 						<FunnelOutline size={18} />
 					</div>
-					<ArrowUpwardOutline size={24} className="rotate-45" />
 				</div>
 			</div>
 			<input
