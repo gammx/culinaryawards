@@ -6,9 +6,10 @@ import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
-import useUploadImage from '~/utils/useUploadImage';
 import DataCard from '../DataCard';
 import IconButton from '~/components/UI/IconButton';
+import HighlightedIcon from '~/components/UI/HighlightedIcon';
+import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
 
 interface Option {
@@ -337,9 +338,7 @@ const ParticipantsCard = () => {
 								{participantTarget.website && <DataCard.Anchor href={participantTarget.website} />}
 								{participantTarget.mapsAnchor && <DataCard.Anchor icon="maps" href={participantTarget.mapsAnchor} />}
 								<div className="ml-8 mt-8 flex">
-									<div className="rounded-lg flex items-center justify-center w-6 h-6 mr-8 bg-pink-muted">
-										<HashOutline className="text-pink" size={18} />
-									</div>
+									<HighlightedIcon icon={HashOutline} variant="pink" />
 									<div className="flex flex-col space-y-2">
 										<p className="font-medium">Categories</p>
 										<ul className="text-sm">
