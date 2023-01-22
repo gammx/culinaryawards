@@ -11,6 +11,7 @@ import cs from './CategoriesCard.module.css';
 import cn from 'classnames';
 import useViews from '~/utils/useViews';
 import DataCard from '../DataCard';
+import Button from '~/components/UI/Button';
 import IconButton from '~/components/UI/IconButton';
 import HighlightedIcon from '~/components/UI/HighlightedIcon';
 
@@ -57,7 +58,7 @@ const Categories = () => {
 			);
 			setErrors({});
 			setIsCreateModalOpen(false);
-			categoryFormClear();
+			clearCategoryForms();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -73,16 +74,27 @@ const Categories = () => {
 		async onMutate(dto) {
 			await utils.categories.getAllCategories.cancel();
 			const prevData = utils.categories.getAllCategories.getData();
+			setCategoryProfile(dto);
+			let prevCategory = {} as Category;
 			utils.categories.getAllCategories.setData(undefined,
-				(old) => old && old.map((category) => category.id === dto.id ? dto : category)
+				(old) => old && old.map((category) => {
+					if (category.id === dto.id) {
+						prevCategory = category;
+						return dto;
+					}
+					return category;
+				})
 			);
 			categoryEditZod.setErrors({});
-			setIsEditModalOpen(false);
-			categoryFormClear();
-			return { prevData };
+			setCategoryProfileTab('info');
+			clearCategoryForms();
+			return { prevData, prevCategory };
 		},
 		onError(err, vars, ctx) {
-			ctx && utils.categories.getAllCategories.setData(undefined, ctx.prevData);
+			if (ctx) {
+				utils.categories.getAllCategories.setData(undefined, ctx.prevData);
+				setCategoryProfile(ctx.prevCategory);
+			}
 		},
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
@@ -124,7 +136,7 @@ const Categories = () => {
 	}, [categoryProfile, participants]);
 
 	/** It clears both category forms */
-	const categoryFormClear = () => {
+	const clearCategoryForms = () => {
 		setCategoryCreatable({ name: '', location: '', participantIds: [] });
 		setCategoryEditable({ id: '', name: '', location: '', participantIds: [] });
 	};
@@ -153,13 +165,15 @@ const Categories = () => {
 	};
 
 	/** It handles the category edit form updates */
-	const categoryEditHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
+	const editableHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		setCategoryEditable({ ...categoryEditable, [event.target.id]: event.target.value });
 	};
 
 	/** It executes the category edit mutation, if the validation gets passed */
-	const categoryEditAction = () => {
+	const editCategory: React.FormEventHandler<HTMLFormElement> = (e) => {
+		e.preventDefault();
 		if (!categoryEditable) return;
+
 		const isAllowed = categoryEditZod.validate(categoryEditable);
 		isAllowed && categoryEdit.mutate(categoryEditable);
 	};
@@ -220,7 +234,7 @@ const Categories = () => {
 					</DataCard.Header>
 					<DataCard.Content>
 						<DataCard.Tabs state={[categoryProfileTab, setCategoryProfileTab]}>
-							{/** PARTICIPANT INFO ----------------------------------------- */}
+							{/** CATEGORY INFO ----------------------------------------- */}
 							<DataCard.Tab value="info" className="px-8 flex flex-col space-y-2">
 								{categoryProfile.location && (
 									<div className="flex mb-8">
@@ -243,6 +257,46 @@ const Categories = () => {
 										</ul>
 									</div>
 								</div>
+							</DataCard.Tab>
+							{/** CATEGORY EDIT ----------------------------------------- */}
+							<DataCard.Tab value="edit" className="px-8">
+								<form onSubmit={editCategory}>
+									<fieldset>
+										<label htmlFor="name">Name *</label>
+										<input
+											type="text"
+											id="name"
+											value={categoryEditable.name}
+											onChange={editableHandler}
+										/>
+										{categoryEditZod.errors.name && <p className="text-xs text-red mt-2">{categoryEditZod.errors.name}</p>}
+									</fieldset>
+									<fieldset>
+										<label htmlFor="location">Location</label>
+										<input
+											type="text"
+											id="location"
+											value={categoryEditable.location || ''}
+											onChange={editableHandler}
+										/>
+									</fieldset>
+									<fieldset>
+										<label htmlFor="participantIds">Categories</label>
+										<Select
+											id="participantIds"
+											isLoading={isCategoriesLoading}
+											options={participantsAsOptions}
+											defaultValue={defaultParticipantOptions}
+											onChange={(values) => setCategoryEditable(prev => ({ ...prev, participantIds: values.map(e => e.value) }))}
+											isMulti
+											isSearchable
+											menuPlacement={'auto'}
+											className="react-select-container"
+											classNamePrefix="react-select"
+										/>
+									</fieldset>
+									<Button type="submit" variant="secondary">Save</Button>
+								</form>
 							</DataCard.Tab>
 						</DataCard.Tabs>
 					</DataCard.Content>

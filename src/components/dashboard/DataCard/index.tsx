@@ -26,7 +26,7 @@ const DataCardContent: FC<HTMLAttributes<HTMLDivElement>> = ({ className, ...pro
 	return (
 		<div
 			ref={contentRef}
-			className={cn(className, "flex flex-col max-h-[26.6rem] overflow-y-auto")}
+			className={cn(className, "flex flex-col h-[26.6rem] overflow-y-auto")}
 			{...props}
 		/>
 	);
