@@ -4,6 +4,7 @@ import { Participant } from '@prisma/client';
 import { trpc } from '~/utils/trpc';
 import { PlusOutline, FunnelOutline, ArrowUpwardOutline, ArrowBackOutline, HashOutline } from '@styled-icons/evaicons-outline';
 import Dialog from '~/components/UI/Dialog';
+import Button from '~/components/UI/Button';
 import DataCardTabs from '../DataCard/DataCardTabs';
 import DataCardAnchor from '../DataCard/DataCardAnchor';
 import Modal from '~/components/UI/Modal';
@@ -14,6 +15,7 @@ import cs from './ParticipantsCard.module.css';
 import cn from 'classnames';
 import Participants from '../Participants';
 import DataCard from '../DataCard';
+import IconButton from '~/components/UI/IconButton';
 import useViews from '~/utils/useViews';
 
 interface Option {
@@ -216,22 +218,14 @@ const ParticipantsCard = () => {
 						<DataCard.TitleBar
 							title="Participants"
 						>
-							<div
-								role="button"
-								className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white"
-								onClick={() => views.go('add')}
-							>
-								<PlusOutline size={18} />
-							</div>
-							<div role="button" className="border border-white/50 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-								<FunnelOutline size={18} />
-							</div>
+							<IconButton icon={PlusOutline}></IconButton>
+							<IconButton icon={FunnelOutline} />
 						</DataCard.TitleBar>
 						<div className="px-8">
 							<input
 								type="text"
 								placeholder="Search"
-								className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 mb-4 text-sm"
+								className="w-full rounded-full"
 							/>
 						</div>
 					</DataCard.Header>
@@ -272,12 +266,7 @@ const ParticipantsCard = () => {
 								<div className="pb-4 flex justify-center">
 									<img src={participantCreatable.thumbnail || '/default_pfp.png'} alt={`${participantCreatable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 								</div>
-								<button
-									className="bg-white/30 hover:bg-white/40 text-gray-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-									onClick={() => creatableFileRef.current?.click()}
-								>
-									Upload
-								</button>
+								<Button onClick={() => creatableFileRef.current?.click()}>Upload</Button>
 								{errors.thumbnail && <span className="text-red-500 text-sm">{errors.thumbnail}</span>}
 							</fieldset>
 							<fieldset>
@@ -334,12 +323,7 @@ const ParticipantsCard = () => {
 									classNamePrefix="react-select"
 								/>
 							</fieldset>
-							<button
-								className="bg-green-muted hover:bg-green-muted/70 text-green py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-								onClick={participantCreateAction}
-							>
-								Add
-							</button>
+							<Button variant="success" onClick={participantCreateAction}>Add</Button>
 						</div>
 					</DataCard.Content>
 				</DataCard.Root>
@@ -384,12 +368,7 @@ const ParticipantsCard = () => {
 									<div className="pb-6 relative">
 										<img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 									</div>
-									<button
-										className="bg-white/30 hover:bg-white/40 text-gray-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-										onClick={() => editableFileRef.current?.click()}
-									>
-										Upload
-									</button>
+									<Button onClick={() => editableFileRef.current?.click()}>Upload</Button>
 									{errors.thumbnail && <p className="text-xs text-red-500 mt-2">{errors.thumbnail}</p>}
 								</fieldset>
 								<fieldset>
@@ -447,18 +426,8 @@ const ParticipantsCard = () => {
 									{errors.categories && <p className="text-xs text-red-500 mt-2">{errors.categories}</p>}
 								</fieldset>
 								<div className="flex space-x-2">
-									<button
-										className="bg-blue-muted hover:bg-blue-muted/70 text-blue py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-										onClick={participantEditAction}
-									>
-										Save
-									</button>
-									<button
-										className="bg-white/30 hover:bg-white/40 text-neutral-500 py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-										onClick={() => onTabChange('info')}
-									>
-										Cancel
-									</button>
+									<Button variant="secondary" onClick={participantEditAction}>Save</Button>
+									<Button onClick={() => onTabChange('info')}>Cancel</Button>
 								</div>
 							</DataCard.Tab>
 							{/** PARTICIPANT DELETE ----------------------------------------- */}
@@ -467,12 +436,7 @@ const ParticipantsCard = () => {
 									<label>Delete Participant</label>
 									<p className="text-sm">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
 									<br />
-									<button
-										className="bg-red-muted hover:bg-red-muted/70 text-red py-1.5 px-4 text-sm font-bold rounded-md uppercase tracking-wider"
-										onClick={participantDeleteAction}
-									>
-										Delete
-									</button>
+									<Button variant="danger" onClick={participantDeleteAction}>Delete</Button>
 								</fieldset>
 							</DataCard.Tab>
 						</DataCard.Tabs>

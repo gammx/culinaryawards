@@ -10,7 +10,7 @@ module.exports = {
         'circle': '50%',
       },
       colors: {
-        'bone': '#C9D9DE',
+        'bone': '#E1EDF2',
         'blue': '#00A3FF',
         'blue-muted': '#CCEAFF',
         'yellow': '#FFB800',

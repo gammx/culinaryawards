@@ -63,7 +63,7 @@ label {
 }
 
 input {
-	@apply bg-white/30 border rounded-md px-4 py-1 text-sm focus:outline focus:outline-white/50;
+	@apply bg-gradient-to-r from-white/30 via-white/50 to-white/30 rounded-xl bg-transparent px-6 py-2 text-sm focus:outline-2 focus:outline-white/30 outline-none;
 }
 
 .react-select__indicators span {
@@ -116,4 +116,16 @@ input {
 
 .react-select__multi-value__label {
 	@apply !text-black;
+}
+
+.IconButton {
+	transition: all 0.1s ease-in-out;
+	background-color: transparent;
+	border: 1px solid rgb(255, 255, 255, 0.8);
+}
+
+.IconButton:hover {
+	border-color: rgb(255, 255, 255, 0.5);
+	background-color: rgb(255, 255, 255, 0.5);
+	box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.07);
 }

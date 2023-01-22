@@ -23,7 +23,7 @@ const DataCardTitleBar: React.FC<DataCardTitleBarProps> = ({ title, onBack, chil
 				)}
 				<h1 className="font-medium text-2xl">{title}</h1>
 			</div>
-			<div className="flex space-x-4">
+			<div className="flex space-x-2">
 				{children}
 			</div>
 		</div>
