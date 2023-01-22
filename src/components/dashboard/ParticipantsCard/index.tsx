@@ -1,19 +1,12 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
+import { PlusOutline, FunnelOutline, HashOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
-import { PlusOutline, FunnelOutline, ArrowUpwardOutline, ArrowBackOutline, HashOutline } from '@styled-icons/evaicons-outline';
-import Dialog from '~/components/UI/Dialog';
 import Button from '~/components/UI/Button';
-import DataCardTabs from '../DataCard/DataCardTabs';
-import DataCardAnchor from '../DataCard/DataCardAnchor';
-import Modal from '~/components/UI/Modal';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
 import useUploadImage from '~/utils/useUploadImage';
-import cs from './ParticipantsCard.module.css';
-import cn from 'classnames';
-import Participants from '../Participants';
 import DataCard from '../DataCard';
 import IconButton from '~/components/UI/IconButton';
 import useViews from '~/utils/useViews';
@@ -38,10 +31,7 @@ const ParticipantsCard = () => {
 	// These are the award categories displayed as options in the participant forms
 	const [categoriesAsOptions, setCategoriesAsOptions] = useState<Option[]>([]);
 	const [defaultOptions, setDefaultOptions] = useState<Option[]>([]);
-	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const [isParticipantModalOpen, setIsParticipantModalOpen] = useState(false);
-	const [isEditingParticipant, setIsEditingParticipant] = useState(false);
-	const [cardTab, setCardTab] = useState('info');
+	const [profileTab, setProfileTab] = useState('info');
 	const [participantTarget, setParticipantTarget] = useState<Participant | null>(null);
 	const [participantCreatable, setParticipantCreatable] = useState({
 		name: '',
@@ -51,12 +41,11 @@ const ParticipantsCard = () => {
 		website: '',
 		mapsAnchor: '',
 	});
-	const { fileInputRef: creatableFileRef, uploadImage: creatableFileUpload } = useUploadImage({
+	const [participantEditable, setParticipantEditable] = useState({} as Participant);
+	const { fileInputRef: creatableAvatarRef, uploadImage: uploadCreatableAvatar } = useUploadImage({
 		onUpload: (url) => setParticipantCreatable(prev => ({ ...prev, thumbnail: url as string }))
 	});
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [participantEditable, setParticipantEditable] = useState({} as Participant);
-	const { fileInputRef: editableFileRef, uploadImage: editableFileUpload } = useUploadImage({
+	const { fileInputRef: editableAvatarRef, uploadImage: uploadEditableAvatar } = useUploadImage({
 		onUpload: (url) => setParticipantEditable(prev => ({ ...prev, thumbnail: url as string })),
 	});
 	const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
@@ -78,7 +67,7 @@ const ParticipantsCard = () => {
 			);
 			setErrors({});
 			views.goBack();
-			participantCreateClear();
+			clearCreatable();
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -105,7 +94,7 @@ const ParticipantsCard = () => {
 				})
 			);
 			setErrors({});
-			setCardTab('info');
+			setProfileTab('info');
 			return { prevData, prevParticipant };
 		},
 		onError(err, vars, ctx) {
@@ -127,7 +116,7 @@ const ParticipantsCard = () => {
 				(old) => old && old.filter((participant) => participant.id !== dto.participantId)
 			);
 			views.goBack();
-			setCardTab('info');
+			setProfileTab('info');
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -138,6 +127,7 @@ const ParticipantsCard = () => {
 		}
 	});
 
+	/** Sync editable DTO with the current participant profile changes */
 	useEffect(() => {
 		if (!participantTarget || !categories) return;
 
@@ -157,12 +147,12 @@ const ParticipantsCard = () => {
 	};
 
 	/** It clears the create participant form */
-	const participantCreateClear = () => {
+	const clearCreatable = () => {
 		setParticipantCreatable({ name: '', direction: '', thumbnail: '', categories: [], website: '', mapsAnchor: '' });
 	};
 
 	/** It handles the create form updates */
-	const participantCreateHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
+	const creatableHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
 		setParticipantCreatable((prev) => ({
 			...prev,
 			[e.target.id]: e.target.value,
@@ -170,13 +160,13 @@ const ParticipantsCard = () => {
 	};
 
 	/** It executes the create mutation if the introduced values are valid */
-	const participantCreateAction = () => {
+	const createParticipant = () => {
 		const isAllowed = validate(participantCreatable);
 		isAllowed && participantCreate.mutate(participantCreatable);
 	};
 
 	/** It handles the edit form updates */
-	const participantEditHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
+	const editableHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
 		setParticipantEditable((prev) => ({
 			...prev,
 			[e.target.id]: e.target.value,
@@ -190,24 +180,24 @@ const ParticipantsCard = () => {
 	};
 
 	/** It executes the edit mutation if the introduced values are valid */
-	const participantEditAction = () => {
+	const editParticipant = () => {
 		const { categoryIds, ...editable } = participantEditable;
 		const isAllowed = validate({ ...editable, categories: categoryIds });
 		isAllowed && participantEdit.mutate({ ...editable, categories: categoryIds });
 	};
 
 	/** Callback to execute when user moves between tabs */
-	const onTabChange = (tab: string) => {
+	const changeProfileTab = (tab: string) => {
 		participantTarget && setParticipantEditable(participantTarget);
 		setErrors({});
-		setCardTab(tab);
+		setProfileTab(tab);
 	};
 
 	/** It cancels the add participant action */
-	const cancelParticipantAdd = () => {
+	const cancelCreateParticipant = () => {
 		views.go('list');
 		setErrors({});
-		participantCreateClear();
+		clearCreatable();
 	};
 
 	return (
@@ -255,18 +245,18 @@ const ParticipantsCard = () => {
 					<DataCard.Header>
 						<DataCard.TitleBar
 							title="Add Participant"
-							onBack={cancelParticipantAdd}
+							onBack={cancelCreateParticipant}
 						></DataCard.TitleBar>
 					</DataCard.Header>
 					<DataCard.Content className="px-8 h-full w-full overflow-y-auto">
 						<div className="w-full">
 							<fieldset >
 								<label htmlFor="thumbnail">Picture *</label>
-								<input ref={creatableFileRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={creatableFileUpload} className="hidden" />
+								<input ref={creatableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadCreatableAvatar} className="hidden" />
 								<div className="pb-4 flex justify-center">
 									<img src={participantCreatable.thumbnail || '/default_pfp.png'} alt={`${participantCreatable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 								</div>
-								<Button onClick={() => creatableFileRef.current?.click()}>Upload</Button>
+								<Button onClick={() => creatableAvatarRef.current?.click()}>Upload</Button>
 								{errors.thumbnail && <span className="text-red-500 text-sm">{errors.thumbnail}</span>}
 							</fieldset>
 							<fieldset>
@@ -275,7 +265,7 @@ const ParticipantsCard = () => {
 									id="name"
 									type="text"
 									value={participantCreatable.name}
-									onChange={participantCreateHandler}
+									onChange={creatableHandler}
 								/>
 								{errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
 							</fieldset>
@@ -285,7 +275,7 @@ const ParticipantsCard = () => {
 									id="direction"
 									type="text"
 									value={participantCreatable.direction}
-									onChange={participantCreateHandler}
+									onChange={creatableHandler}
 								/>
 								{errors.direction && <span className="text-red-500 text-sm">{errors.direction}</span>}
 							</fieldset>
@@ -295,7 +285,7 @@ const ParticipantsCard = () => {
 									id="website"
 									type="text"
 									value={participantCreatable.website}
-									onChange={participantCreateHandler}
+									onChange={creatableHandler}
 									placeholder="https://..."
 								/>
 							</fieldset>
@@ -305,7 +295,7 @@ const ParticipantsCard = () => {
 									id="mapsAnchor"
 									type="text"
 									value={participantCreatable.mapsAnchor}
-									onChange={participantCreateHandler}
+									onChange={creatableHandler}
 									placeholder="https://www.google.com/maps/place/..."
 								/>
 							</fieldset>
@@ -323,7 +313,7 @@ const ParticipantsCard = () => {
 									classNamePrefix="react-select"
 								/>
 							</fieldset>
-							<Button variant="success" onClick={participantCreateAction}>Add</Button>
+							<Button variant="success" onClick={createParticipant}>Add</Button>
 						</div>
 					</DataCard.Content>
 				</DataCard.Root>
@@ -341,7 +331,7 @@ const ParticipantsCard = () => {
 						></DataCard.TitleBar>
 					</DataCard.Header>
 					<DataCard.Content>
-						<DataCard.Tabs state={[cardTab, onTabChange]}>
+						<DataCard.Tabs state={[profileTab, changeProfileTab]}>
 							{/** PARTICIPANT INFO ----------------------------------------- */}
 							<DataCard.Tab value="info">
 								{participantTarget.website && <DataCard.Anchor href={participantTarget.website} />}
@@ -364,11 +354,11 @@ const ParticipantsCard = () => {
 							<DataCard.Tab value="edit" className="px-8">
 								<fieldset>
 									<label htmlFor="thumbnail">Picture</label>
-									<input ref={editableFileRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={editableFileUpload} className="hidden" />
+									<input ref={editableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadEditableAvatar} className="hidden" />
 									<div className="pb-6 relative">
 										<img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 									</div>
-									<Button onClick={() => editableFileRef.current?.click()}>Upload</Button>
+									<Button onClick={() => editableAvatarRef.current?.click()}>Upload</Button>
 									{errors.thumbnail && <p className="text-xs text-red-500 mt-2">{errors.thumbnail}</p>}
 								</fieldset>
 								<fieldset>
@@ -377,7 +367,7 @@ const ParticipantsCard = () => {
 										id="name"
 										type="text"
 										value={participantEditable.name}
-										onChange={participantEditHandler}
+										onChange={editableHandler}
 									/>
 									{errors.name && <p className="text-xs text-red-500 mt-2">{errors.name}</p>}
 								</fieldset>
@@ -387,7 +377,7 @@ const ParticipantsCard = () => {
 										id="direction"
 										type="text"
 										value={participantEditable.direction || ''}
-										onChange={participantEditHandler}
+										onChange={editableHandler}
 									/>
 									{errors.direction && <p className="text-xs text-red-500 mt-2">{errors.direction}</p>}
 								</fieldset>
@@ -397,7 +387,7 @@ const ParticipantsCard = () => {
 										id="website"
 										type="text"
 										value={participantEditable.website || ''}
-										onChange={participantEditHandler}
+										onChange={editableHandler}
 									/>
 								</fieldset>
 								<fieldset>
@@ -406,7 +396,7 @@ const ParticipantsCard = () => {
 										id="mapsAnchor"
 										type="text"
 										value={participantEditable.mapsAnchor || ''}
-										onChange={participantEditHandler}
+										onChange={editableHandler}
 									/>
 								</fieldset>
 								<fieldset>
@@ -426,8 +416,8 @@ const ParticipantsCard = () => {
 									{errors.categories && <p className="text-xs text-red-500 mt-2">{errors.categories}</p>}
 								</fieldset>
 								<div className="flex space-x-2">
-									<Button variant="secondary" onClick={participantEditAction}>Save</Button>
-									<Button onClick={() => onTabChange('info')}>Cancel</Button>
+									<Button variant="secondary" onClick={editParticipant}>Save</Button>
+									<Button onClick={() => changeProfileTab('info')}>Cancel</Button>
 								</div>
 							</DataCard.Tab>
 							{/** PARTICIPANT DELETE ----------------------------------------- */}
