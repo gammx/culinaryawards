@@ -1,7 +1,7 @@
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, useState, useEffect } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
-import { PlusOutline, FunnelOutline, ArrowUpwardOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, PinOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
 import Dialog from '~/components/UI/Dialog';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
@@ -9,13 +9,21 @@ import type { Category } from '@prisma/client';
 import type { Option } from '~/utils/select';
 import cs from './CategoriesCard.module.css';
 import cn from 'classnames';
+import useViews from '~/utils/useViews';
+import DataCard from '../DataCard';
+import IconButton from '~/components/UI/IconButton';
+import HighlightedIcon from '~/components/UI/HighlightedIcon';
 
 const Categories = () => {
+	const views = useViews('list');
 	const [participantsAsOptions, setParticipantsAsOptions] = useState<Option[]>([]);
 	const [defaultParticipantOptions, setDefaultParticipantOptions] = useState<Option[]>([]);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	/** The currently focused category profile */
+	const [categoryProfile, setCategoryProfile] = useState<Category | null>(null);
+	const [categoryProfileTab, setCategoryProfileTab] = useState('info');
 	const [categoryCreatable, setCategoryCreatable] = useState({
 		name: '',
 		location: '',
@@ -31,7 +39,7 @@ const Categories = () => {
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
 	const categoryEditZod = useZod(categoryEditSchema);
 	const utils = trpc.useContext();
-	const allCategories = trpc.categories.getAllCategories.useQuery();
+	const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery();
 	const { data: participants, isLoading: participantsIsLoading } = trpc.participants.getAllParticipants.useQuery(undefined, {
 		onSuccess(data) {
 			setParticipantsAsOptions(data.map((participant) => ({
@@ -101,6 +109,20 @@ const Categories = () => {
 		}
 	});
 
+	/** Sync editable DTO with the current category profile changes */
+	useEffect(() => {
+		if (!categoryProfile || !participants) return;
+
+		setCategoryEditable(categoryProfile);
+		setDefaultParticipantOptions(categoryProfile.participantIds.map((id) => {
+			const participant = participants.find((participant) => participant.id === id);
+			return {
+				label: participant!.name,
+				value: participant!.id,
+			};
+		}));
+	}, [categoryProfile, participants]);
+
 	/** It clears both category forms */
 	const categoryFormClear = () => {
 		setCategoryCreatable({ name: '', location: '', participantIds: [] });
@@ -147,25 +169,86 @@ const Categories = () => {
 		categoryDelete.mutate({ categoryId: categoryDeletable });
 	};
 
+	const goToProfile = (editable: Category) => {
+		setCategoryProfile(editable);
+		setCategoryProfileTab('info');
+		views.go('profile');
+	};
+
+	const goBackToList = () => {
+		setCategoryProfile(null);
+		views.goBack();
+	};
+
 	return (
-		<div className={cn(cs.Wrapper, 'h-full py-9 px-8 border-l border-l-white/20')}>
-			<div className="flex justify-between items-center mb-4">
-				<h1 className="font-medium text-2xl">Categories</h1>
-				<div className="flex space-x-5">
-					<div role="button" className="border border-white/40 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<PlusOutline size={18} />
-					</div>
-					<div role="button" className="border border-white/40 rounded-lg w-6 h-6 flex items-center justify-center hover:border-white">
-						<FunnelOutline size={18} />
-					</div>
-				</div>
-			</div>
-			<input
-				type="text"
-				placeholder="Search"
-				className="outline-none h-9 w-full bg-white opacity-30 backdrop-blur-sm rounded-full focus:outline-white py-2-5 px-5 text-black text-sm"
-			/>
-		</div>
+		<>
+			{views.current === 'list' && (
+				<DataCard.Root className="border-l border-l-white/20">
+					<DataCard.Header>
+						<DataCard.TitleBar title="Categories">
+							<IconButton icon={PlusOutline}></IconButton>
+							<IconButton icon={FunnelOutline} />
+						</DataCard.TitleBar>
+						<div className="px-8">
+							<input
+								type="text"
+								placeholder="Search"
+								className="w-full rounded-full"
+							/>
+						</div>
+					</DataCard.Header>
+					<DataCard.Content className="px-8">
+						<ul className="flex flex-col space-y-1">
+							{categories && categories.length > 0 && categories.map((category) => (
+								<li
+									key={category.id}
+									className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
+									onClick={() => goToProfile(category)}
+								>
+									{category.name}
+								</li>
+							))}
+						</ul>
+					</DataCard.Content>
+				</DataCard.Root>
+			)}
+
+			{views.current === 'profile' && categoryProfile &&  (
+				<DataCard.Root className="border-l border-l-white/20">
+					<DataCard.Header>
+						<DataCard.TitleBar title={categoryProfile.name} onBack={goBackToList}></DataCard.TitleBar>
+					</DataCard.Header>
+					<DataCard.Content>
+						<DataCard.Tabs state={[categoryProfileTab, setCategoryProfileTab]}>
+							{/** PARTICIPANT INFO ----------------------------------------- */}
+							<DataCard.Tab value="info" className="px-8 flex flex-col space-y-2">
+								{categoryProfile.location && (
+									<div className="flex mb-8">
+										<HighlightedIcon icon={PinOutline} variant="green" />
+										<span>{categoryProfile.location}</span>
+									</div>
+								)}
+
+								<div className="flex">
+									<HighlightedIcon icon={SmilingFaceOutline} variant="pink" />
+									<div className="flex flex-col space-y-2">
+										<p className="font-medium">Participants</p>
+										<ul className="text-sm">
+											{categoryProfile.participantIds.length > 0 && participants
+												? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (
+													<li key={participant.id}>{participant.name}</li>
+												))
+												: <li>No participants yet</li>
+											}
+										</ul>
+									</div>
+								</div>
+							</DataCard.Tab>
+						</DataCard.Tabs>
+					</DataCard.Content>
+				</DataCard.Root>
+			)}
+		</>
 	);
 };
 
