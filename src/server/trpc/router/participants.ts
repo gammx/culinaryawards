@@ -11,7 +11,7 @@ export const participantRouter = router({
 	addNewParticipant: adminProcedure
 		.input(participantCreateSchema)
 		.mutation(async ({ ctx, input }) => {
-			const { name, direction, thumbnail, categories, website, mapsAnchor } = input;
+			const { name, direction, thumbnail, categoryIds, website, mapsAnchor } = input;
 			// ImgBB does not want the mimetype, so we split it
 			const response = await imgBBUploader({
 				apiKey: env.BB_KEY,
@@ -23,8 +23,9 @@ export const participantRouter = router({
 					direction,
 					thumbnail: response.image.url as string,
 					categories: {
-						connect: categories.map((category) => ({ id: category })),
+						connect: categoryIds.map((category) => ({ id: category })),
 					},
+					categoryIds,
 					website,
 					mapsAnchor,
 				},
@@ -62,7 +63,7 @@ export const participantRouter = router({
 			const participant = await ctx.prisma.participant.findUnique({ where: { id: input.id } });
 			if (!participant) return;
 
-			let { id, name, direction, thumbnail, categories, website, mapsAnchor } = input;
+			let { id, name, direction, thumbnail, categoryIds, website, mapsAnchor } = input;
 
 			// Check if the image URL has changed so we don't reupload it
 			if (thumbnail !== participant.thumbnail) {
@@ -74,8 +75,8 @@ export const participantRouter = router({
 				thumbnail = response.image.url as string;
 			}
 
-			const newCategories = categories.filter((category) => !participant.categoryIds.includes(category));
-			const removedCategories = participant.categoryIds.filter((category) => !categories.includes(category));
+			const newCategories = categoryIds.filter((category) => !participant.categoryIds.includes(category));
+			const removedCategories = participant.categoryIds.filter((category) => !categoryIds.includes(category));
 
 			// Connect to the new categories
 			for (const categoryId of newCategories) {
@@ -107,7 +108,7 @@ export const participantRouter = router({
 					name,
 					direction,
 					thumbnail,
-					categoryIds: categories,
+					categoryIds,
 					website,
 					mapsAnchor,
 				},

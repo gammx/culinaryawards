@@ -11,6 +11,18 @@ export const categoryRouter = router({
 			categoryId: z.string(),
 		}))
 		.mutation(async ({ ctx, input }) => {
+			// Unlink all participants from category
+			const category = await ctx.prisma.category.findUnique({ where: { id: input.categoryId } });
+			await ctx.prisma.category.update({
+				where: {
+					id: input.categoryId,
+				},
+				data: {
+					participants: {
+						disconnect: category?.participantIds.map((id) => ({ id })) || [],
+					},
+				},
+			});
 			return await ctx.prisma.category.delete({
 				where: {
 					id: input.categoryId,

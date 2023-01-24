@@ -38,7 +38,7 @@ const ParticipantsCard = () => {
 		name: '',
 		direction: '',
 		thumbnail: '',
-		categories: [] as string[],
+		categoryIds: [] as string[],
 		website: '',
 		mapsAnchor: '',
 	});
@@ -84,7 +84,7 @@ const ParticipantsCard = () => {
 			await utils.participants.getAllParticipants.cancel();
 			const prevData = utils.participants.getAllParticipants.getData();
 			let prevParticipant = {} as Participant;
-			setParticipantTarget({ ...vars, categoryIds: vars.categories });
+			setParticipantTarget(vars);
 			utils.participants.getAllParticipants.setData(undefined,
 				(old) => old && old.map((participant) => {
 					if (participant.id === vars.id) {
@@ -106,6 +106,7 @@ const ParticipantsCard = () => {
 		},
 		onSettled() {
 			refetchParticipants();
+			utils.categories.getAllCategories.invalidate();
 		}
 	});
 	const participantDelete = trpc.participants.deleteParticipant.useMutation({
@@ -132,15 +133,13 @@ const ParticipantsCard = () => {
 	useEffect(() => {
 		if (!participantTarget || !categories) return;
 
+		console.log(participantTarget)
 		setParticipantEditable(participantTarget);
-		setDefaultOptions(participantTarget.categoryIds.map((id) => {
-			const category = categories.find((category) => category.id === id);
-			return {
-				label: category!.name,
-				value: category!.id,
-			};
-		}));
-	}, [participantTarget]);
+		setDefaultOptions(categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => ({
+			label: category.name,
+			value: category.id,
+		})));
+	}, [participantTarget, categories]);
 
 	/** It executes the delete mutation */
 	const participantDeleteAction = () => {
@@ -149,7 +148,7 @@ const ParticipantsCard = () => {
 
 	/** It clears the create participant form */
 	const clearCreatable = () => {
-		setParticipantCreatable({ name: '', direction: '', thumbnail: '', categories: [], website: '', mapsAnchor: '' });
+		setParticipantCreatable({ name: '', direction: '', thumbnail: '', categoryIds: [], website: '', mapsAnchor: '' });
 	};
 
 	/** It handles the create form updates */
@@ -182,9 +181,8 @@ const ParticipantsCard = () => {
 
 	/** It executes the edit mutation if the introduced values are valid */
 	const editParticipant = () => {
-		const { categoryIds, ...editable } = participantEditable;
-		const isAllowed = validate({ ...editable, categories: categoryIds });
-		isAllowed && participantEdit.mutate({ ...editable, categories: categoryIds });
+		const isAllowed = validate(participantEditable);
+		isAllowed && participantEdit.mutate(participantEditable);
 	};
 
 	/** Callback to execute when user moves between tabs */
@@ -412,7 +410,7 @@ const ParticipantsCard = () => {
 										className="react-select-container"
 										classNamePrefix="react-select"
 									/>
-									{errors.categories && <p className="text-xs text-red-500 mt-2">{errors.categories}</p>}
+									{errors.categoryIds && <p className="text-xs text-red-500 mt-2">{errors.categoryIds}</p>}
 								</fieldset>
 								<div className="flex space-x-2">
 									<Button variant="secondary" onClick={editParticipant}>Save</Button>

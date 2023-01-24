@@ -110,7 +110,7 @@ const Categories = () => {
 			utils.categories.getAllCategories.setData(undefined,
 				(old) => old && old.filter((category) => category.id !== categoryId)
 			);
-			setIsDeleteModalOpen(false);
+			views.go('list');
 			return { prevData };
 		},
 		onError(err, vars, ctx) {
@@ -118,6 +118,7 @@ const Categories = () => {
 		},
 		onSettled() {
 			utils.categories.getAllCategories.invalidate();
+			utils.participants.getAllParticipants.invalidate();
 		}
 	});
 
@@ -179,8 +180,9 @@ const Categories = () => {
 	};
 
 	/** It executes the category delete mutation */
-	const categoryDeleteAction = () => {
-		categoryDelete.mutate({ categoryId: categoryDeletable });
+	const deleteCategory: React.FormEventHandler<HTMLFormElement> = (e) => {
+		e.preventDefault();
+		categoryDelete.mutate({ categoryId: categoryProfile!.id });
 	};
 
 	const goToProfile = (editable: Category) => {
@@ -296,6 +298,17 @@ const Categories = () => {
 										/>
 									</fieldset>
 									<Button type="submit" variant="secondary">Save</Button>
+								</form>
+							</DataCard.Tab>
+							{/** CATEGORY DELETE ----------------------------------------- */}
+							<DataCard.Tab value="delete" className="px-8">
+								<form onSubmit={deleteCategory}>
+									<fieldset>
+										<label>Delete Category</label>
+										<p>Are you sure you want to delete this category?</p>
+										<br />
+										<Button type="submit" variant="danger">Delete</Button>
+									</fieldset>
 								</form>
 							</DataCard.Tab>
 						</DataCard.Tabs>
