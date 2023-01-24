@@ -49,7 +49,7 @@ const ParticipantsCard = () => {
 	const { fileInputRef: editableAvatarRef, uploadImage: uploadEditableAvatar } = useUploadImage({
 		onUpload: (url) => setParticipantEditable(prev => ({ ...prev, thumbnail: url as string })),
 	});
-	const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
+	const { data: categories, isLoading: isCategoriesLoading, isFetching: isCategoriesFetching } = trpc.categories.getAllCategories.useQuery(undefined, {
 		onSuccess: (data) => {
 			if (!data) return;
 			setCategoriesAsOptions(data.map((category) => ({
@@ -89,7 +89,7 @@ const ParticipantsCard = () => {
 				(old) => old && old.map((participant) => {
 					if (participant.id === vars.id) {
 						prevParticipant = participant;
-						return { ...participant, ...vars };
+						return vars;
 					}
 					return participant;
 				})
@@ -133,7 +133,6 @@ const ParticipantsCard = () => {
 	useEffect(() => {
 		if (!participantTarget || !categories) return;
 
-		console.log(participantTarget)
 		setParticipantEditable(participantTarget);
 		setDefaultOptions(categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => ({
 			label: category.name,
@@ -340,9 +339,14 @@ const ParticipantsCard = () => {
 									<div className="flex flex-col space-y-2">
 										<p className="font-medium">Categories</p>
 										<ul className="text-sm">
-											{categories && categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
-												<li key={category.id}>{category.name}</li>
-											))}
+											{isCategoriesFetching
+												? <li>Loading...</li>
+												: (categories && participantTarget.categoryIds.length > 0)
+												? categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
+													<li key={category.id}>{category.name}</li>
+												))
+												: <li>No categories yet</li>
+											}
 										</ul>
 									</div>
 								</div>

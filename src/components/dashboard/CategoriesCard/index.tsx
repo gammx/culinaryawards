@@ -40,8 +40,15 @@ const Categories = () => {
 	const { validate, errors, setErrors } = useZod(categoryCreateSchema);
 	const categoryEditZod = useZod(categoryEditSchema);
 	const utils = trpc.useContext();
-	const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery();
-	const { data: participants, isLoading: participantsIsLoading } = trpc.participants.getAllParticipants.useQuery(undefined, {
+	const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
+		onSuccess(data) {
+			if (data && categoryProfile) {
+				const target = data.find((participant) => participant.id === categoryProfile.id);
+				target && setCategoryProfile(target);
+			}
+		},
+	});
+	const { data: participants, isFetching: isParticipantFetching } = trpc.participants.getAllParticipants.useQuery(undefined, {
 		onSuccess(data) {
 			setParticipantsAsOptions(data.map((participant) => ({
 				value: participant.id,
@@ -250,7 +257,9 @@ const Categories = () => {
 									<div className="flex flex-col space-y-2">
 										<p className="font-medium">Participants</p>
 										<ul className="text-sm">
-											{categoryProfile.participantIds.length > 0 && participants
+											{isParticipantFetching
+												? <p>Loading...</p>
+												: (participants && categoryProfile.participantIds.length > 0)
 												? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (
 													<li key={participant.id}>{participant.name}</li>
 												))
