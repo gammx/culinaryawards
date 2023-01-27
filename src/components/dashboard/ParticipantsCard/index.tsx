@@ -255,7 +255,7 @@ const ParticipantsCard = () => {
 									<img src={participantCreatable.thumbnail || '/default_pfp.png'} alt={`${participantCreatable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
 								</div>
 								<Button onClick={() => creatableAvatarRef.current?.click()}>Upload</Button>
-								{errors.thumbnail && <span className="text-red-500 text-sm">{errors.thumbnail}</span>}
+								{errors.thumbnail && <span className="text-red text-sm">{errors.thumbnail}</span>}
 							</fieldset>
 							<fieldset>
 								<label htmlFor="name">Name *</label>
@@ -265,7 +265,7 @@ const ParticipantsCard = () => {
 									value={participantCreatable.name}
 									onChange={creatableHandler}
 								/>
-								{errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
+								{errors.name && <span className="text-red text-sm">{errors.name}</span>}
 							</fieldset>
 							<fieldset>
 								<label htmlFor="direction">Direction *</label>
@@ -275,7 +275,7 @@ const ParticipantsCard = () => {
 									value={participantCreatable.direction}
 									onChange={creatableHandler}
 								/>
-								{errors.direction && <span className="text-red-500 text-sm">{errors.direction}</span>}
+								{errors.direction && <span className="text-red text-sm">{errors.direction}</span>}
 							</fieldset>
 							<fieldset>
 								<label htmlFor="website">Website</label>
@@ -303,13 +303,14 @@ const ParticipantsCard = () => {
 									id="categories"
 									isLoading={isCategoriesLoading}
 									options={categoriesAsOptions}
-									onChange={(values) => setParticipantCreatable(prev => ({ ...prev, categories: values.map(e => e.value) }))}
+									onChange={(values) => setParticipantCreatable(prev => ({ ...prev, categoryIds: values.map(e => e.value) }))}
 									isMulti
 									isSearchable
 									menuPlacement={'auto'}
 									className="react-select-container"
 									classNamePrefix="react-select"
 								/>
+								{errors.categoryIds && <span className="text-red text-sm">{errors.categoryIds}</span>}
 							</fieldset>
 							<Button variant="success" onClick={createParticipant}>Add</Button>
 						</div>
