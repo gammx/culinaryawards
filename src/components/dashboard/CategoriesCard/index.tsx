@@ -64,7 +64,7 @@ const Categories = () => {
 				(old) => old && [...old, { ...vars, id: '-1' }]
 			);
 			setErrors({});
-			setIsCreateModalOpen(false);
+			views.goBack();
 			clearCategoryForms();
 			return { prevData };
 		},
@@ -155,7 +155,8 @@ const Categories = () => {
 	};
 
 	/** It executes the category create mutation, validating the values first */
-	const categoryCreateAction = () => {
+	const createCategory: React.FormEventHandler<HTMLFormElement> = (e) => {
+		e.preventDefault();
 		const isAllowed = validate(categoryCreatable);
 		isAllowed && categoryCreate.mutate(categoryCreatable);
 	};
@@ -209,7 +210,7 @@ const Categories = () => {
 				<DataCard.Root className="border-l border-l-white/20">
 					<DataCard.Header>
 						<DataCard.TitleBar title="Categories">
-							<IconButton icon={PlusOutline}></IconButton>
+							<IconButton icon={PlusOutline} onClick={() => views.go('add')} />
 							<IconButton icon={FunnelOutline} />
 						</DataCard.TitleBar>
 						<div className="px-8">
@@ -236,6 +237,52 @@ const Categories = () => {
 				</DataCard.Root>
 			)}
 
+			{views.current === 'add' && (
+				<DataCard.Root className="border-l border-l-white/20">
+					<DataCard.Header>
+						<DataCard.TitleBar title="Add Category" onBack={views.goBack} />
+					</DataCard.Header>
+					<DataCard.Content className="px-8">
+						<form onSubmit={createCategory}>
+							<fieldset>
+								<label htmlFor="name">Name *</label>
+								<input
+									type="text"
+									id="name"
+									value={categoryCreatable.name}
+									onChange={categoryCreateHandler}
+								/>
+								{errors.name && <span className="text-red text-xs">{errors.name}</span>}
+							</fieldset>
+							<fieldset>
+								<label htmlFor="location">Location</label>
+								<input
+									type="text"
+									id="location"
+									value={categoryCreatable.location}
+									onChange={categoryCreateHandler}
+								/>
+							</fieldset>
+							<fieldset>
+								<label htmlFor="participantIds">Participants</label>
+								<Select
+									id="participantIds"
+									isLoading={isCategoriesLoading}
+									options={participantsAsOptions}
+									onChange={(opts) => setCategoryCreatable({ ...categoryCreatable, participantIds: opts.map(option => option.value) })}
+									isMulti
+									isSearchable
+									menuPlacement={'auto'}
+									className="react-select-container"
+									classNamePrefix="react-select"
+								/>
+							</fieldset>
+							<Button type="submit" variant="success">Add Category</Button>
+						</form>
+					</DataCard.Content>
+				</DataCard.Root>
+			)}
+
 			{views.current === 'profile' && categoryProfile &&  (
 				<DataCard.Root className="border-l border-l-white/20">
 					<DataCard.Header>
@@ -243,6 +290,7 @@ const Categories = () => {
 					</DataCard.Header>
 					<DataCard.Content>
 						<DataCard.Tabs state={[categoryProfileTab, setCategoryProfileTab]}>
+							
 							{/** CATEGORY INFO ----------------------------------------- */}
 							<DataCard.Tab value="info" className="px-8 flex flex-col space-y-2">
 								{categoryProfile.location && (
@@ -269,6 +317,7 @@ const Categories = () => {
 									</div>
 								</div>
 							</DataCard.Tab>
+
 							{/** CATEGORY EDIT ----------------------------------------- */}
 							<DataCard.Tab value="edit" className="px-8">
 								<form onSubmit={editCategory}>
@@ -309,6 +358,7 @@ const Categories = () => {
 									<Button type="submit" variant="secondary">Save</Button>
 								</form>
 							</DataCard.Tab>
+
 							{/** CATEGORY DELETE ----------------------------------------- */}
 							<DataCard.Tab value="delete" className="px-8">
 								<form onSubmit={deleteCategory}>

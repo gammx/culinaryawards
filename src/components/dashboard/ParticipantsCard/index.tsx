@@ -206,7 +206,7 @@ const ParticipantsCard = () => {
 						<DataCard.TitleBar
 							title="Participants"
 						>
-							<IconButton icon={PlusOutline}></IconButton>
+							<IconButton icon={PlusOutline} onClick={() => views.go('add')} />
 							<IconButton icon={FunnelOutline} />
 						</DataCard.TitleBar>
 						<div className="px-8">
