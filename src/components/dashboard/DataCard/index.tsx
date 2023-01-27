@@ -7,37 +7,37 @@ import { TabsContent } from '@radix-ui/react-tabs';
 import cs from './DataCard.module.css';
 import cn from 'classnames';
 
-interface DataCardRootProps extends HTMLAttributes<HTMLDivElement> {}
+interface DataCardRootProps extends HTMLAttributes<HTMLDivElement> { }
 
 const DataCardRoot: FC<DataCardRootProps> = ({
-	children,
-	className,
-	...props
+  children,
+  className,
+  ...props
 }) => {
-	return (
-		<div className={cn(cs.Wrapper, className, "h-full py-9 DataCard")} {...props}>
-			{children}
-		</div>
-	);
+  return (
+    <div className={cn(cs.Wrapper, className, "h-full py-9 DataCard")} {...props}>
+      {children}
+    </div>
+  );
 };
 
 const DataCardContent: FC<HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => {
-	const contentRef = React.useRef<HTMLDivElement>(null);
-	return (
-		<div
-			ref={contentRef}
-			className={cn(className, "flex flex-col h-[26.6rem] overflow-y-auto")}
-			{...props}
-		/>
-	);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  return (
+    <div
+      ref={contentRef}
+      className={cn(className, "flex flex-col h-[26.6rem] overflow-y-auto")}
+      {...props}
+    />
+  );
 };
 
 export default {
-	Root: DataCardRoot,
-	Content: DataCardContent,
-	Header: DataCardHeader,
-	Tabs: DataCardTabs,
-	Tab: TabsContent,
-	Anchor: DataCardAnchor,
-	TitleBar: DataCardTitleBar,
+  Root: DataCardRoot,
+  Content: DataCardContent,
+  Header: DataCardHeader,
+  Tabs: DataCardTabs,
+  Tab: TabsContent,
+  Anchor: DataCardAnchor,
+  TitleBar: DataCardTitleBar,
 };
