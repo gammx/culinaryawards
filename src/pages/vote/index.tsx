@@ -2,8 +2,9 @@ import React from 'react';
 import cn from 'classnames';
 import * as Progress from '@radix-ui/react-progress';
 import { trpc } from '~/utils/trpc';
-import { ArrowRightOutline, ArrowLeftOutline, CheckmarkSquareOutline } from '@styled-icons/evaicons-outline';
+import { ArrowRightOutline, ArrowLeftOutline, CheckmarkSquareOutline, PaperPlaneOutline } from '@styled-icons/evaicons-outline';
 import { Participant } from '@prisma/client';
+import { useRouter } from 'next/router';
 
 interface Vote {
   categoryId: string;
@@ -11,11 +12,13 @@ interface Vote {
 }
 
 const Vote = () => {
+  const router = useRouter();
   const [progress, setProgress] = React.useState(0);
   const [currentCategory, setCurrentCategory] = React.useState(0);
-  const { data: categories } = trpc.categories.getAllCategoriesWithParticipants.useQuery(undefined, {
-    onSuccess: (data) => {
-      console.log(data);
+  const { data: categories } = trpc.categories.getAllCategoriesWithParticipants.useQuery();
+  const votesSend = trpc.votes.sendVotes.useMutation({
+    onSettled(data) {
+      router.replace('/voted');
     }
   });
   const [votes, setVotes] = React.useState<Vote[]>([]);
@@ -34,6 +37,11 @@ const Vote = () => {
     const category = categories[currentCategory];
     const vote = votes.find((vote) => vote.categoryId === category?.id);
     return !!vote;
+  };
+
+  const isLastCategory = () => {
+    if (!categories) return false;
+    return currentCategory === categories.length - 1;
   };
 
   const setVote = (participant: Participant) => {
@@ -56,6 +64,8 @@ const Vote = () => {
       });
     }
   };
+
+  const sendVotes = () => votesSend.mutate({ votes });
 
   const goToNextCategory = () => {
     if (!categories) return;
@@ -102,14 +112,24 @@ const Vote = () => {
                 </button>
               )}
               <button
-                className={cn("bg-bone text-black font-display font-bold uppercase inline-flex p-3 transition-opacity duration-300", {
+                className={cn("bg-bone text-black font-display font-bold uppercase inline-flex items-center p-3 transition-opacity duration-300", {
                   "cursor-not-allowed opacity-10": !hasVotedCurrentCategory(),
+                  "bg-yellow": isLastCategory(),
                 })}
                 disabled={!hasVotedCurrentCategory()}
-                onClick={goToNextCategory}
+                onClick={isLastCategory() ? sendVotes : goToNextCategory}
               >
-                <ArrowRightOutline className="mr-2" size={24} />
-                Next
+                {isLastCategory() ? (
+                  <>
+                    <PaperPlaneOutline className="mr-2" size={18} />
+                    Finish
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightOutline className="mr-2" size={24} />
+                    Next
+                  </>
+                )}
               </button>
             </div>
           </div>
