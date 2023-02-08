@@ -13,6 +13,7 @@ interface Vote {
 
 const Vote = () => {
   const router = useRouter();
+  /** Progress of the votation slider */
   const [progress, setProgress] = React.useState(0);
   const [currentCategory, setCurrentCategory] = React.useState(0);
   const { data: categories } = trpc.categories.getAllCategoriesWithParticipants.useQuery();
@@ -23,6 +24,7 @@ const Vote = () => {
   });
   const [votes, setVotes] = React.useState<Vote[]>([]);
 
+  /** It checks if the user has voted for a certain participant on the current category */
   const hasVoted = (participant: Participant) => {
     if (!categories) return false;
 
@@ -31,6 +33,7 @@ const Vote = () => {
     return vote?.participantId === participant.id;
   };
 
+  /** It checks if the user has already voted for the current category of the slider */
   const hasVotedCurrentCategory = () => {
     if (!categories) return false;
 
@@ -39,11 +42,13 @@ const Vote = () => {
     return !!vote;
   };
 
+  /** It checks if the current category of the slider is the last one */
   const isLastCategory = () => {
     if (!categories) return false;
     return currentCategory === categories.length - 1;
   };
 
+  /** It votes a participant for the current category */
   const setVote = (participant: Participant) => {
     if (!categories) return;
 
@@ -65,6 +70,7 @@ const Vote = () => {
     }
   };
 
+  /** It executes the send votes action */
   const sendVotes = () => votesSend.mutate({ votes });
 
   const goToNextCategory = () => {

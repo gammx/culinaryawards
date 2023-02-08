@@ -1,9 +1,9 @@
 import React from 'react';
 import withAlreadyVoted from '~/hoc/withAlreadyVoted';
-import { HomeOutline, ChevronLeftOutline, ChevronRightOutline } from '@styled-icons/evaicons-outline';
+import cn from 'classnames';
+import { HomeOutline, ChevronLeftOutline } from '@styled-icons/evaicons-outline';
 import { useRouter } from 'next/router';
 import { trpc } from '~/utils/trpc';
-import cn from 'classnames';
 
 const Voted = () => {
 	const router = useRouter();
