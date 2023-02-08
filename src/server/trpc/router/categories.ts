@@ -1,10 +1,17 @@
 import { z } from "zod";
-import { router, adminProcedure } from "../trpc";
+import { router, adminProcedure, publicProcedure } from "../trpc";
 import { categoryCreateSchema, categoryEditSchema } from "~/utils/schemas/categories";
 
 export const categoryRouter = router({
-  getAllCategories: adminProcedure.query(async ({ ctx }) => {
+  getAllCategories: publicProcedure.query(async ({ ctx }) => {
 		return await ctx.prisma.category.findMany();
+	}),
+	getAllCategoriesWithParticipants: publicProcedure.query(async ({ ctx }) => {
+		return await ctx.prisma.category.findMany({
+			include: {
+				participants: true,
+			},
+		});
 	}),
 	deleteCategory: adminProcedure
 		.input(z.object({

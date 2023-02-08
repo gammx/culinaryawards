@@ -1,27 +1,21 @@
-import { ChangeEventHandler, useState, useEffect } from 'react';
-import { trpc } from '~/utils/trpc';
-import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
-import { PlusOutline, FunnelOutline, PinOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
-import Dialog from '~/components/UI/Dialog';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
-import type { Category } from '@prisma/client';
-import type { Option } from '~/utils/select';
-import cs from './CategoriesCard.module.css';
-import cn from 'classnames';
 import useViews from '~/utils/useViews';
 import DataCard from '../DataCard';
 import Button from '~/components/UI/Button';
 import IconButton from '~/components/UI/IconButton';
 import HighlightedIcon from '~/components/UI/HighlightedIcon';
+import type { Category } from '@prisma/client';
+import type { Option } from '~/utils/select';
+import { ChangeEventHandler, useState, useEffect } from 'react';
+import { trpc } from '~/utils/trpc';
+import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
+import { PlusOutline, FunnelOutline, PinOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
 
 const Categories = () => {
   const views = useViews('list');
   const [participantsAsOptions, setParticipantsAsOptions] = useState<Option[]>([]);
   const [defaultParticipantOptions, setDefaultParticipantOptions] = useState<Option[]>([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   /** The currently focused category profile */
   const [categoryProfile, setCategoryProfile] = useState<Category | null>(null);
   const [categoryProfileTab, setCategoryProfileTab] = useState('info');
@@ -36,20 +30,21 @@ const Categories = () => {
     location: '',
     participantIds: []
   } as Category);
-  const [categoryDeletable, setCategoryDeletable] = useState('');
   const { validate, errors, setErrors } = useZod(categoryCreateSchema);
   const categoryEditZod = useZod(categoryEditSchema);
   const utils = trpc.useContext();
   const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
     onSuccess(data) {
+      // Sync the category profile with the fetched data
       if (data && categoryProfile) {
         const target = data.find((participant) => participant.id === categoryProfile.id);
         target && setCategoryProfile(target);
       }
     },
   });
-  const { data: participants, isFetching: isParticipantFetching } = trpc.participants.getAllParticipants.useQuery(undefined, {
+  const { data: participants, isFetching: isParticipantsFetching } = trpc.participants.getAllParticipants.useQuery(undefined, {
     onSuccess(data) {
+      // Sync the form select options with the fetched data
       setParticipantsAsOptions(data.map((participant) => ({
         value: participant.id,
         label: participant.name
@@ -81,6 +76,8 @@ const Categories = () => {
     async onMutate(dto) {
       await utils.categories.getAllCategories.cancel();
       const prevData = utils.categories.getAllCategories.getData();
+      // Update the category profile because we're on the profile view and its data is now stale
+      // We also save the previous category data so if we get an error, we'll revert the changes later
       setCategoryProfile(dto);
       let prevCategory = {} as Category;
       utils.categories.getAllCategories.setData(undefined,
@@ -161,18 +158,6 @@ const Categories = () => {
     isAllowed && categoryCreate.mutate(categoryCreatable);
   };
 
-  /** It opens the category edit modal */
-  const categoryEditLink = (editable: Category) => {
-    setCategoryEditable(editable);
-    if (participants) {
-      setDefaultParticipantOptions(editable.participantIds.map((participantId) => {
-        const participant = participants.find((p) => p.id === participantId);
-        return { value: participant!.id, label: participant!.name };
-      }));
-    }
-    setIsEditModalOpen(true);
-  };
-
   /** It handles the category edit form updates */
   const editableHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
     setCategoryEditable({ ...categoryEditable, [event.target.id]: event.target.value });
@@ -201,6 +186,7 @@ const Categories = () => {
 
   const goBackToList = () => {
     setCategoryProfile(null);
+    setCategoryProfileTab('info');
     views.goBack();
   };
 
@@ -305,7 +291,7 @@ const Categories = () => {
                   <div className="flex flex-col space-y-2">
                     <p className="font-medium">Participants</p>
                     <ul className="text-sm">
-                      {isParticipantFetching
+                      {isParticipantsFetching
                         ? <p>Loading...</p>
                         : (participants && categoryProfile.participantIds.length > 0)
                           ? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (

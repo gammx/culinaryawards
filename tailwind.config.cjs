@@ -19,10 +19,17 @@ module.exports = {
         'green-muted': '#C8F0E7',
         'pink': '#FF3CC8',
         'pink-muted': '#FBE5FF',
+        'pink-vivid': '#FB3EFF',
         'red': '#FC3364',
         'red-muted': '#FFEDED',
+      },
+      gridTemplateColumns: {
+        'votation': 'repeat(3, minmax(0, 300px))',
       }
     },
+    fontFamily: {
+      'display': ['SohneBreit'],
+    }
   },
   plugins: [],
 };
