@@ -22,6 +22,8 @@ module.exports = {
         'pink-vivid': '#FB3EFF',
         'red': '#FC3364',
         'red-muted': '#FFEDED',
+        'void': '#010509',
+        'linear': '#212931',
       },
       gridTemplateColumns: {
         'votation': 'repeat(3, minmax(0, 300px))',
