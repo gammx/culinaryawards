@@ -4,7 +4,10 @@ import DashboardCardInput from './DashboardCardInput';
 import DashboardIconButton from './DashboardIconButton';
 import DashboardPanelCard from './DashboardPanelCard';
 import DashboardPanelTitlebar from './DashboardPanelTitlebar';
+import DashboardPanelTabs from './DashboardPanelTabs';
+import DashboardCardProfile from './DashboardCardProfile';
 import cn from 'classnames';
+import { TabsContent } from '@radix-ui/react-tabs';
 
 interface DataCardRootProps extends HTMLAttributes<HTMLDivElement> { }
 
@@ -27,4 +30,7 @@ export default {
   Content: DashboardCardContent,
   Input: DashboardCardInput,
   IconButton: DashboardIconButton,
+  Tabs: DashboardPanelTabs,
+  Tab: TabsContent,
+  Profile: DashboardCardProfile,
 };

@@ -180,5 +180,13 @@ label {
 }
 
 .void-green-gradient {
-	background: linear-gradient(221.48deg, rgba(3, 9, 13, 0) 2.05%, rgba(3, 20, 22, 0.512) 98.08%);
+	background: linear-gradient(221.46deg, rgba(2, 7, 10, 0) 0%, #050D11 100%);
+}
+
+.card-search-bg:hover {
+	background: linear-gradient(90deg, #071015 0%, rgba(7, 16, 21, 0) 50%, #071015 100%);
+}
+
+.vertical-rl {
+	writing-mode: vertical-rl;
 }

@@ -14,7 +14,7 @@ const DashboardPanelTitlebar: React.FC<DashboardPanelTitlebarProps> = ({
 	return (
 		<div className={cn("flex justify-between", className)} {...props}>
 			<h1 className="font-display text-2xl text-bone">{title}</h1>
-			<div>
+			<div className="flex space-x-2">
 				{children}
 			</div>
 		</div>
