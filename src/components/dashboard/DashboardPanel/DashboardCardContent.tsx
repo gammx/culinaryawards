@@ -8,7 +8,7 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
 	...props
 }) => {
 	return (
-		<div className={cn("mt-6 flex-1 overflow-y-auto dashboard-card-scrollbar", className)} {...props} />
+		<div className={cn("mt-6 -mx-8 px-8 flex-1 overflow-y-auto dashboard-card-scrollbar dashboard-card-content", className)} {...props} />
 	);
 };
 

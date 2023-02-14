@@ -213,7 +213,7 @@ label {
 	writing-mode: vertical-rl;
 }
 
-.dashboard-card-tab label {
+.dashboard-card-tab label, .dashboard-card-content label {
 	font-family: 'SohneBreit', sans-serif;
 	color: #b7ccd8;
 	font-weight: bold;
@@ -221,6 +221,6 @@ label {
 	font-size: 11px;
 }
 
-.dashboard-card-tab fieldset {
+.dashboard-card-tab fieldset, .dashboard-card-content fieldset {
 	padding: 4px 0;
 }

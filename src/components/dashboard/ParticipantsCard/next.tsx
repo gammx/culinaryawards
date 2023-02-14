@@ -143,7 +143,8 @@ const ParticipantsCard = () => {
   }, [participantTarget, categories]);
 
   /** It executes the delete mutation */
-  const participantDeleteAction = () => {
+  const deleteParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     participantTarget && participantDelete.mutate({ participantId: participantTarget.id });
   };
 
@@ -161,7 +162,8 @@ const ParticipantsCard = () => {
   };
 
   /** It executes the create mutation if the introduced values are valid */
-  const createParticipant = () => {
+  const createParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     const isAllowed = validate(participantCreatable);
     isAllowed && participantCreate.mutate(participantCreatable);
   };
@@ -181,7 +183,8 @@ const ParticipantsCard = () => {
   };
 
   /** It executes the edit mutation if the introduced values are valid */
-  const editParticipant = () => {
+  const editParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     const isAllowed = validate(participantEditable);
     isAllowed && participantEdit.mutate(participantEditable);
   };
@@ -208,7 +211,7 @@ const ParticipantsCard = () => {
             <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
             <DashboardPanel.IconButton icon={FunnelOutline} />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input type="text" placeholder="Search" />
+          <DashboardPanel.Input outlined type="text" placeholder="Search" />
           <DashboardPanel.Content>
             <ul
               className="flex flex-col space-y-1 text-bone-muted"
@@ -217,7 +220,7 @@ const ParticipantsCard = () => {
                 participants.map((participant) => (
                   <li
                     key={participant.id}
-                    className="flex space-x-4 items-center cursor-pointer card-search-bg rounded-lg p-2"
+                    className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
                     onClick={() => goToProfile(participant)}
                   >
                     <img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
@@ -230,39 +233,202 @@ const ParticipantsCard = () => {
         </>
       )}
 
+      {/** PARTICIPANT ADD ----------------------------------------- */}
+      {views.current === 'add' && (
+        <>
+          <DashboardPanel.Titlebar
+            title="Add Participant"
+            onBack={cancelCreateParticipant}
+          />
+          <DashboardPanel.Content>
+            <form onSubmit={createParticipant}>
+              <fieldset >
+                <label htmlFor="thumbnail">Picture *</label>
+                <input ref={creatableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadCreatableAvatar} className="hidden" />
+                <div className="pb-4 flex justify-center">
+                  <img src={participantCreatable.thumbnail || '/default_pfp.png'} alt={`${participantCreatable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
+                </div>
+                <Button onClick={() => creatableAvatarRef.current?.click()}>Upload</Button>
+                {errors.thumbnail && <span className="text-red text-sm">{errors.thumbnail}</span>}
+              </fieldset>
+              <fieldset>
+                <label htmlFor="name">Name *</label>
+                <DashboardPanel.Input
+                  id="name"
+                  type="text"
+                  value={participantCreatable.name}
+                  onChange={creatableHandler}
+                />
+                {errors.name && <span className="text-red text-sm">{errors.name}</span>}
+              </fieldset>
+              <fieldset>
+                <label htmlFor="direction">Direction *</label>
+                <DashboardPanel.Input
+                  id="direction"
+                  type="text"
+                  value={participantCreatable.direction}
+                  onChange={creatableHandler}
+                />
+                {errors.direction && <span className="text-red text-sm">{errors.direction}</span>}
+              </fieldset>
+              <fieldset>
+                <label htmlFor="website">Website</label>
+                <DashboardPanel.Input
+                  id="website"
+                  type="text"
+                  value={participantCreatable.website}
+                  onChange={creatableHandler}
+                  placeholder="https://..."
+                />
+              </fieldset>
+              <fieldset>
+                <label htmlFor="mapsAnchor">Google Maps URL</label>
+                <DashboardPanel.Input
+                  id="mapsAnchor"
+                  type="text"
+                  value={participantCreatable.mapsAnchor}
+                  onChange={creatableHandler}
+                  placeholder="https://www.google.com/maps/place/..."
+                />
+              </fieldset>
+              <fieldset>
+                <label htmlFor="categories">Categories</label>
+                <Select
+                  id="categories"
+                  isLoading={isCategoriesLoading}
+                  options={categoriesAsOptions}
+                  onChange={(values) => setParticipantCreatable(prev => ({ ...prev, categoryIds: values.map(e => e.value) }))}
+                  isMulti
+                  isSearchable
+                  menuPlacement={'auto'}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+                {errors.categoryIds && <span className="text-red text-sm">{errors.categoryIds}</span>}
+              </fieldset>
+              <Button variant="primary" type="submit">Add</Button>
+            </form>
+          </DashboardPanel.Content>
+        </>
+      )}
+
       {views.current === 'profile' && participantTarget && (
-        <div>
+        <>
           <DashboardPanel.Tabs state={[profileTab, setProfileTab]} onBack={() => {
             setProfileTab('info');
             setParticipantTarget(null);
             views.goBack();
           }}>
-            <DashboardPanel.Content>
-              <DashboardPanel.Tab value="info">
-                <DashboardPanel.Profile
-                  name={participantTarget.name}
-                  thumbnail={participantTarget.thumbnail}
-                  siteAnchor={participantTarget.website}
-                  mapsAnchor={participantTarget.mapsAnchor}
-                />
-                {/* ------------ PARTICIPANT CATEGORIES ------------ */}
-                <div className="mt-11">
-                  <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
-                  <ul className="text-sm text-ink mt-5">
-                    {isCategoriesFetching
-                      ? <li>Loading...</li>
-                      : (categories && participantTarget.categoryIds.length > 0)
-                        ? categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
-                          <li key={category.id}>{category.name}</li>
-                        ))
-                        : <li>No categories yet</li>
-                    }
-                  </ul>
+            {/** PARTICIPANT INFO ----------------------------------------- */}
+            <DashboardPanel.Tab value="info">
+              <DashboardPanel.Profile
+                name={participantTarget.name}
+                thumbnail={participantTarget.thumbnail}
+                siteAnchor={participantTarget.website}
+                mapsAnchor={participantTarget.mapsAnchor}
+              />
+              <div className="mt-11">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
+                <ul className="text-sm text-ink mt-5">
+                  {isCategoriesFetching
+                    ? <li>Loading...</li>
+                    : (categories && participantTarget.categoryIds.length > 0)
+                      ? categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
+                        <li key={category.id}>{category.name}</li>
+                      ))
+                      : <li>No categories yet</li>
+                  }
+                </ul>
+              </div>
+            </DashboardPanel.Tab>
+
+            {/** PARTICIPANT EDIT ----------------------------------------- */}
+            <DashboardPanel.Tab value="edit">
+              <form onSubmit={editParticipant}>
+                <fieldset>
+                  <label htmlFor="thumbnail">Picture</label>
+                  <input ref={editableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadEditableAvatar} className="hidden" />
+                  <div className="pb-6 relative">
+                    <img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
+                  </div>
+                  <Button variant="tertiary" onClick={() => editableAvatarRef.current?.click()}>Upload</Button>
+                  {errors.thumbnail && <p className="text-xs text-red-500 mt-2">{errors.thumbnail}</p>}
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="name">Name</label>
+                  <DashboardPanel.Input
+                    id="name"
+                    type="text"
+                    value={participantEditable.name}
+                    onChange={editableHandler}
+                  />
+                  {errors.name && <p className="text-xs text-red-500 mt-2">{errors.name}</p>}
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="direction">Direction</label>
+                  <DashboardPanel.Input
+                    id="direction"
+                    type="text"
+                    value={participantEditable.direction || ''}
+                    onChange={editableHandler}
+                  />
+                  {errors.direction && <p className="text-xs text-red-500 mt-2">{errors.direction}</p>}
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="website">Website</label>
+                  <DashboardPanel.Input
+                    id="website"
+                    type="text"
+                    value={participantEditable.website || ''}
+                    onChange={editableHandler}
+                  />
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="mapsAnchor">Google Maps URL</label>
+                  <DashboardPanel.Input
+                    id="mapsAnchor"
+                    type="text"
+                    value={participantEditable.mapsAnchor || ''}
+                    onChange={editableHandler}
+                  />
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="categories">Categories</label>
+                  <Select
+                    id="categories"
+                    isLoading={isCategoriesLoading}
+                    options={categoriesAsOptions}
+                    defaultValue={defaultOptions}
+                    onChange={(values) => setParticipantEditable(prev => ({ ...prev, categoryIds: values.map(e => e.value) }))}
+                    isMulti
+                    isSearchable
+                    menuPlacement={'auto'}
+                    menuPosition={'fixed'}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
+                  {errors.categoryIds && <p className="text-xs text-red-500 mt-2">{errors.categoryIds}</p>}
+                </fieldset>
+                <div className="flex space-x-2">
+                  <Button variant="primary" type="submit">Save</Button>
+                  <Button onClick={() => changeProfileTab('info')}>Cancel</Button>
                 </div>
-              </DashboardPanel.Tab>
-            </DashboardPanel.Content>
+              </form>
+            </DashboardPanel.Tab>
+
+            {/** PARTICIPANT DELETE ----------------------------------------- */}
+            <DashboardPanel.Tab value="delete">
+              <form onSubmit={deleteParticipant}>
+                <fieldset className="h-full">
+                  <label>Delete Participant</label>
+                  <p className="text-sm text-ink/80">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
+                  <br />
+                  <Button variant="danger" type="submit">Delete</Button>
+                </fieldset>
+              </form>
+            </DashboardPanel.Tab>
           </DashboardPanel.Tabs>
-        </div>
+        </>
       )}
     </DashboardPanel.Card>
   );
