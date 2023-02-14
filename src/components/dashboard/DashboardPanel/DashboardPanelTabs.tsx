@@ -29,7 +29,9 @@ const DashboardPanelTabs: React.FC<DashboardPanelTabs> = ({
           </Tabs.Trigger>
         </Tabs.List>
       </div>
-      {children}
+      <div className="overflow-y-auto dashboard-card-scrollbar -mx-8 px-8 pt-4 dashboard-card-tab">
+        {children}
+      </div>
     </Tabs.Root>
   );
 };
