@@ -261,6 +261,7 @@ const Categories = () => {
                   isMulti
                   isSearchable
                   menuPlacement={'auto'}
+                  menuPosition={'fixed'}
                   className="react-select-container"
                   classNamePrefix="react-select"
                 />
@@ -335,6 +336,7 @@ const Categories = () => {
                     isMulti
                     isSearchable
                     menuPlacement={'auto'}
+                    menuPosition={'fixed'}
                     className="react-select-container"
                     classNamePrefix="react-select"
                   />
