@@ -288,7 +288,7 @@ const Categories = () => {
                 </div>
               </div>
               <div className="mt-11">
-                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Participants</p>
                 <ul className="text-sm text-ink mt-5 space-y-2">
                   {isParticipantsFetching
                     ? <li>Loading...</li>
@@ -296,7 +296,7 @@ const Categories = () => {
                       ? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (
                         <li key={participant.id}>{participant.name}</li>
                       ))
-                      : <li>No categories yet</li>
+                      : <li>No participants yet</li>
                   }
                 </ul>
               </div>
