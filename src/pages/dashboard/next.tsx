@@ -1,8 +1,8 @@
 import { useSession } from 'next-auth/react';
 import withAdminSession from '~/hoc/withAdminSession';
-import { PlusOutline } from '@styled-icons/evaicons-outline';
 import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard/next';
+import CategoriesCard from '~/components/dashboard/CategoriesCard';
 
 const Dashboard = () => {
 	const { data } = useSession();
@@ -23,8 +23,9 @@ const Dashboard = () => {
 				</DashboardPanel.Root>
 				<section className="basis-6/12">
 				</section>
-				<section className="basis-3/12">
-				</section>
+				<DashboardPanel.Root className="basis-3/12">
+					<CategoriesCard />
+				</DashboardPanel.Root>
 			</div>
 		</main>
 	);

@@ -1,18 +1,14 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline, HashOutline, GlobeOutline, Globe2Outline, ChevronLeftOutline, Link2Outline, PinOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
-import DataCard from '../DataCard';
-import IconButton from '~/components/UI/IconButton';
-import HighlightedIcon from '~/components/UI/HighlightedIcon';
 import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
 import DashboardPanel from '../DashboardPanel';
-import _ from 'underscore.string';
 
 interface Option {
   label: string;

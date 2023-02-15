@@ -1,19 +1,19 @@
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
 import useViews from '~/utils/useViews';
-import DataCard from '../DataCard';
 import Button from '~/components/UI/Button';
-import IconButton from '~/components/UI/IconButton';
-import HighlightedIcon from '~/components/UI/HighlightedIcon';
+import Image from 'next/image';
+import DashboardPanel from '../DashboardPanel';
 import type { Category } from '@prisma/client';
 import type { Option } from '~/utils/select';
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
-import { PlusOutline, FunnelOutline, PinOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
 
 const Categories = () => {
   const views = useViews('list');
+  const [categoryBanner, setCategoryBanner] = useState('');
   const [participantsAsOptions, setParticipantsAsOptions] = useState<Option[]>([]);
   const [defaultParticipantOptions, setDefaultParticipantOptions] = useState<Option[]>([]);
   /** The currently focused category profile */
@@ -181,6 +181,7 @@ const Categories = () => {
   const goToProfile = (editable: Category) => {
     setCategoryProfile(editable);
     setCategoryProfileTab('info');
+    setCategoryBanner(getRandomCategoryBanner());
     views.go('profile');
   };
 
@@ -190,49 +191,50 @@ const Categories = () => {
     views.goBack();
   };
 
+  const getRandomCategoryBanner = () => {
+    const colors = ["dark_blue", "dark_aqua", "dark_pink", "golden", "sick_1", "sick_2", "sick_3", "sick_4"];
+    return colors[Math.floor(Math.random() * colors.length)]!;
+  };
+
   return (
-    <>
+    <DashboardPanel.Card className="void-green-gradient">
       {views.current === 'list' && (
-        <DataCard.Root className="border-l border-l-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar title="Categories">
-              <IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-              <IconButton icon={FunnelOutline} />
-            </DataCard.TitleBar>
-            <div className="px-8">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full rounded-full"
-              />
-            </div>
-          </DataCard.Header>
-          <DataCard.Content className="px-8">
-            <ul className="flex flex-col space-y-1">
+        <>
+          <DashboardPanel.Titlebar
+            title="Categories"
+          >
+            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
+            <DashboardPanel.IconButton icon={FunnelOutline} />
+          </DashboardPanel.Titlebar>
+          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Content>
+            <ul className="flex flex-col space-y-1 text-bone-muted">
               {categories && categories.length > 0 && categories.map((category) => (
                 <li
                   key={category.id}
-                  className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
+                  className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
                   onClick={() => goToProfile(category)}
                 >
                   {category.name}
                 </li>
               ))}
             </ul>
-          </DataCard.Content>
-        </DataCard.Root>
+          </DashboardPanel.Content>
+        </>
       )}
 
+      {/** PARTICIPANT ADD ----------------------------------------- */}
       {views.current === 'add' && (
-        <DataCard.Root className="border-l border-l-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar title="Add Category" onBack={views.goBack} />
-          </DataCard.Header>
-          <DataCard.Content className="px-8">
+        <>
+          <DashboardPanel.Titlebar
+            title="Add Category"
+            onBack={views.goBack}
+          />
+          <DashboardPanel.Content>
             <form onSubmit={createCategory}>
               <fieldset>
                 <label htmlFor="name">Name *</label>
-                <input
+                <DashboardPanel.Input
                   type="text"
                   id="name"
                   value={categoryCreatable.name}
@@ -242,7 +244,7 @@ const Categories = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="location">Location</label>
-                <input
+                <DashboardPanel.Input
                   type="text"
                   id="location"
                   value={categoryCreatable.location}
@@ -263,104 +265,99 @@ const Categories = () => {
                   classNamePrefix="react-select"
                 />
               </fieldset>
-              <Button type="submit" variant="success">Add Category</Button>
+              <Button type="submit" variant="primary">Add Category</Button>
             </form>
-          </DataCard.Content>
-        </DataCard.Root>
+          </DashboardPanel.Content>
+        </>
       )}
 
       {views.current === 'profile' && categoryProfile && (
-        <DataCard.Root className="border-l border-l-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar title={categoryProfile.name} onBack={goBackToList}></DataCard.TitleBar>
-          </DataCard.Header>
-          <DataCard.Content>
-            <DataCard.Tabs state={[categoryProfileTab, setCategoryProfileTab]}>
+        <>
 
-              {/** CATEGORY INFO ----------------------------------------- */}
-              <DataCard.Tab value="info" className="px-8 flex flex-col space-y-2">
-                {categoryProfile.location && (
-                  <div className="flex mb-8">
-                    <HighlightedIcon icon={PinOutline} variant="green" />
-                    <span>{categoryProfile.location}</span>
-                  </div>
-                )}
-
-                <div className="flex">
-                  <HighlightedIcon icon={SmilingFaceOutline} variant="pink" />
-                  <div className="flex flex-col space-y-2">
-                    <p className="font-medium">Participants</p>
-                    <ul className="text-sm">
-                      {isParticipantsFetching
-                        ? <p>Loading...</p>
-                        : (participants && categoryProfile.participantIds.length > 0)
-                          ? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (
-                            <li key={participant.id}>{participant.name}</li>
-                          ))
-                          : <li>No participants yet</li>
-                      }
-                    </ul>
-                  </div>
+          {/** PARTICIPANT INFO ----------------------------------------- */}
+          <DashboardPanel.Tabs
+            state={[categoryProfileTab, setCategoryProfileTab]}
+            onBack={goBackToList}
+          >
+            <DashboardPanel.Tab value="info">
+              <div className="flex justify-center relative">
+                <Image src={`/retrowave_plains/${categoryBanner}.png`} width={180} height={160} alt="Retrowave figure" />
+                <div className="absolute w-full h-full top-0 left-0 flex flex-col justify-end items-center text-center space-y-2 pb-8">
+                  <h1 className="font-display text-bone text-2xl">{categoryProfile.name}</h1>
+                  <p className="font-display text-bone text-xs uppercase">{categoryProfile.location}</p>
                 </div>
-              </DataCard.Tab>
+              </div>
+              <div className="mt-11">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
+                <ul className="text-sm text-ink mt-5 space-y-2">
+                  {isParticipantsFetching
+                    ? <li>Loading...</li>
+                    : (participants && categoryProfile.participantIds.length > 0)
+                      ? participants.filter((participant) => categoryProfile.participantIds.includes(participant.id)).map(participant => (
+                        <li key={participant.id}>{participant.name}</li>
+                      ))
+                      : <li>No categories yet</li>
+                  }
+                </ul>
+              </div>
+            </DashboardPanel.Tab>
 
-              {/** CATEGORY EDIT ----------------------------------------- */}
-              <DataCard.Tab value="edit" className="px-8">
-                <form onSubmit={editCategory}>
-                  <fieldset>
-                    <label htmlFor="name">Name *</label>
-                    <input
-                      type="text"
-                      id="name"
-                      value={categoryEditable.name}
-                      onChange={editableHandler}
-                    />
-                    {categoryEditZod.errors.name && <p className="text-xs text-red mt-2">{categoryEditZod.errors.name}</p>}
-                  </fieldset>
-                  <fieldset>
-                    <label htmlFor="location">Location</label>
-                    <input
-                      type="text"
-                      id="location"
-                      value={categoryEditable.location || ''}
-                      onChange={editableHandler}
-                    />
-                  </fieldset>
-                  <fieldset>
-                    <label htmlFor="participantIds">Categories</label>
-                    <Select
-                      id="participantIds"
-                      isLoading={isCategoriesLoading}
-                      options={participantsAsOptions}
-                      defaultValue={defaultParticipantOptions}
-                      onChange={(values) => setCategoryEditable(prev => ({ ...prev, participantIds: values.map(e => e.value) }))}
-                      isMulti
-                      isSearchable
-                      menuPlacement={'auto'}
-                      className="react-select-container"
-                      classNamePrefix="react-select"
-                    />
-                  </fieldset>
-                  <Button type="submit" variant="secondary">Save</Button>
-                </form>
-              </DataCard.Tab>
+            {/** PARTICIPANT EDIT ----------------------------------------- */}
+            <DashboardPanel.Tab value="edit">
+              <form onSubmit={editCategory}>
+                <fieldset>
+                  <label htmlFor="name">Name *</label>
+                  <DashboardPanel.Input
+                    type="text"
+                    id="name"
+                    value={categoryEditable.name}
+                    onChange={editableHandler}
+                  />
+                  {categoryEditZod.errors.name && <p className="text-xs text-red mt-2">{categoryEditZod.errors.name}</p>}
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="location">Location</label>
+                  <DashboardPanel.Input
+                    type="text"
+                    id="location"
+                    value={categoryEditable.location || ''}
+                    onChange={editableHandler}
+                  />
+                </fieldset>
+                <fieldset>
+                  <label htmlFor="participantIds">Categories</label>
+                  <Select
+                    id="participantIds"
+                    isLoading={isCategoriesLoading}
+                    options={participantsAsOptions}
+                    defaultValue={defaultParticipantOptions}
+                    onChange={(values) => setCategoryEditable(prev => ({ ...prev, participantIds: values.map(e => e.value) }))}
+                    isMulti
+                    isSearchable
+                    menuPlacement={'auto'}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
+                </fieldset>
+                <Button type="submit" variant="primary">Save</Button>
+              </form>
+            </DashboardPanel.Tab>
 
-              {/** CATEGORY DELETE ----------------------------------------- */}
-              <DataCard.Tab value="delete" className="px-8">
-                <form onSubmit={deleteCategory}>
-                  <fieldset>
-                    <label>Delete Category</label>
-                    <p>Are you sure you want to delete this category?</p>
-                    <br />
-                    <Button type="submit" variant="danger">Delete</Button>
-                  </fieldset>
-                </form>
-              </DataCard.Tab>
-            </DataCard.Tabs>
-          </DataCard.Content>
-        </DataCard.Root>
+            {/** PARTICIPANT DELETE ----------------------------------------- */}
+            <DashboardPanel.Tab value="delete">
+              <form onSubmit={deleteCategory}>
+                <fieldset>
+                  <label>Delete Category</label>
+                  <p className="text-ink/80">Are you sure you want to delete this category?</p>
+                  <br />
+                  <Button type="submit" variant="danger">Delete</Button>
+                </fieldset>
+              </form>
+            </DashboardPanel.Tab>
+          </DashboardPanel.Tabs>
+        </>
       )}
-    </>
+    </DashboardPanel.Card>
   );
 };
 

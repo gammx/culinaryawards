@@ -27,11 +27,13 @@ const DashboardCardProfile: React.FC<DashboardCardProfileProps> = ({
 					{siteAnchor && <a href={siteAnchor} target="_blank" className="flex"><Link2Outline size={18} className="cursor-pointer fill-ink/60 hover:fill-yellow" /></a>}
 				</div>
 			</div>
+
 			{/* ------------ PARTICIPANT THUMBNAIL ------------ */}
 			<div className="flex-1 flex justify-center relative">
 				<img src={thumbnail} alt="" className="w-32 h-32 rounded-circle shadow-xl shadow-ink/10 z-10" />
 				<img src="/participant_avatar_overlay.png" alt="" className="absolute -bottom-4 left-32" />
 			</div>
+
 			{/* ------------ PARTICIPANT NAME ------------ */}
 			<div>
 				<h1 className="font-display font-medium text-white -scale-[1] vertical-rl">{_.truncate(name, 14)}</h1>
