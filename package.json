@@ -31,9 +31,11 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-modal": "^3.16.1",
+    "react-particles": "^2.9.3",
     "react-select": "^5.7.0",
     "react-usestateref": "^1.0.8",
     "superjson": "1.9.1",
+    "tsparticles": "^2.9.3",
     "underscore.string": "^3.3.6",
     "zod": "^3.18.0"
   },

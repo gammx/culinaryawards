@@ -5,6 +5,7 @@ import { trpc } from '~/utils/trpc';
 import { ArrowRightOutline, ArrowLeftOutline, CheckmarkSquareOutline, PaperPlaneOutline } from '@styled-icons/evaicons-outline';
 import { Participant } from '@prisma/client';
 import { useRouter } from 'next/router';
+import { Particles } from '~/hooks/useParticles';
 
 interface Vote {
   categoryId: string;
@@ -90,102 +91,108 @@ const Vote = () => {
   };
 
   return (
-    <div className="bg-black text-white h-screen w-full flex flex-col">
-      <Progress.Root value={progress} className="w-full overflow-hidden h-2" style={{ transition: 'translateZ(0)' }}>
-        <Progress.Indicator
-          className="bg-bone w-full h-full transition-all duration-500"
-          style={{ transform: `translateX(-${100 - progress}%)` }}
-        />
-      </Progress.Root>
-      {categories && (
-        <>
-          {/** HEADER --------------------- */}
-          <div className="flex justify-between items-center px-44 pt-16">
-            <div>
-              <h1 className="font-display text-5xl font-medium">{categories[currentCategory]?.name}</h1>
-              {categories[currentCategory]?.location && (
-                <div className="py-[2px] px-2 bg-pink-vivid font-medium inline-block uppercase my-5">{categories[currentCategory]?.location}</div>
-              )}
-            </div>
-            <div className="flex space-x-4">
-              {currentCategory > 0 && (
-                <button
-                  className="border border-bone font-display font-bold uppercase inline-flex p-3 transition-opacity duration-300"
-                  onClick={goToPreviousCategory}
-                >
-                  <ArrowLeftOutline className="mr-2" size={24} />
-                  Back
-                </button>
-              )}
-              <button
-                className={cn("bg-bone text-black font-display font-bold uppercase inline-flex items-center p-3 transition-opacity duration-300", {
-                  "cursor-not-allowed opacity-10": !hasVotedCurrentCategory(),
-                  "bg-yellow": isLastCategory(),
-                })}
-                disabled={!hasVotedCurrentCategory()}
-                onClick={isLastCategory() ? sendVotes : goToNextCategory}
-              >
-                {isLastCategory() ? (
-                  <>
-                    <PaperPlaneOutline className="mr-2" size={18} />
-                    Finish
-                  </>
-                ) : (
-                  <>
-                    <ArrowRightOutline className="mr-2" size={24} />
-                    Next
-                  </>
+    <div className="bg-void text-white h-screen w-full relative">
+      
+      <div className="w-full h-full flex flex-col">
+        <Progress.Root value={progress} className="w-full overflow-hidden h-2" style={{ transition: 'translateZ(0)' }}>
+          <Progress.Indicator
+            className="bg-bone w-full h-full transition-all duration-500"
+            style={{ transform: `translateX(-${100 - progress}%)` }}
+          />
+        </Progress.Root>
+        {categories && (
+          <>
+            {/** HEADER --------------------- */}
+            <div className="flex justify-between items-center px-44 pt-16 z-10">
+              <div>
+                <h1 className="font-display text-5xl font-medium">{categories[currentCategory]?.name}</h1>
+                {categories[currentCategory]?.location && (
+                  <div className="py-[2px] px-2 bg-pink-vivid text-sm font-medium inline-block uppercase my-5 tracking-wide">{categories[currentCategory]?.location}</div>
                 )}
-              </button>
-            </div>
-          </div>
-
-          {/** PARTICIPANTS --------------------- */}
-          <div className="w-full grid grid-cols-votation items-center justify-center gap-16 my-10">
-            {categories[currentCategory]?.participants.map((participant) => (
-              <div
-                key={participant.id}
-                className="relative h-[300px] w-[300px] cursor-pointer"
-                onClick={() => setVote(participant)}
-              >
-                <img
-                  src={participant.thumbnail}
-                  alt={`${participant.name} (Thumbnail)`}
-                  className={cn("w-full h-full object-cover", {
-                    "grayscale": !hasVoted(participant),
+              </div>
+              <div className="flex space-x-4">
+                {currentCategory > 0 && (
+                  <button
+                    className="border border-bone font-display font-bold uppercase inline-flex p-3 transition-opacity duration-300"
+                    onClick={goToPreviousCategory}
+                  >
+                    <ArrowLeftOutline className="mr-2" size={24} />
+                    Back
+                  </button>
+                )}
+                <button
+                  className={cn("bg-bone text-void font-display font-bold uppercase inline-flex items-center p-3 transition-opacity duration-300", {
+                    "cursor-not-allowed opacity-10": !hasVotedCurrentCategory(),
+                    "bg-pink": isLastCategory(),
                   })}
-                />
-                {hasVoted(participant) ? (
-                  <>
-                    <div className="absolute top-0 left-0 h-[300px] w-[300px] voted-gradient z-10 backdrop-blur-sm" />
-                    <div
-                      className="absolute top-0 left-0 w-full h-full z-20 flex flex-col px-4 pt-4 pb-8"
-                      style={{ background: 'url(/retrowave_figure.png)' }}
-                    >
-                      <div>
-                        <img src={participant.thumbnail} className="w-12 h-12 object-cover" alt={`${participant.name} (Thumbnail)`} />
-                      </div>
-                      <div className="flex-1 flex flex-col justify-end">
-                        <p className="text-3xl font-display font-medium text-black mb-3">{participant.name}</p>
+                  disabled={!hasVotedCurrentCategory()}
+                  onClick={isLastCategory() ? sendVotes : goToNextCategory}
+                >
+                  {isLastCategory() ? (
+                    <>
+                      <PaperPlaneOutline className="mr-2" size={18} />
+                      Finish
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightOutline className="mr-2" size={24} />
+                      Next
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/** PARTICIPANTS --------------------- */}
+            <div className="w-full grid grid-cols-votation items-center justify-center gap-16 my-10">
+              {categories[currentCategory]?.participants.map((participant) => (
+                <div
+                  key={participant.id}
+                  className="relative h-[300px] w-[300px] cursor-pointer"
+                  onClick={() => setVote(participant)}
+                >
+                  <img
+                    src={participant.thumbnail}
+                    alt={`${participant.name} (Thumbnail)`}
+                    className={cn("w-full h-full object-cover", {
+                      "grayscale": !hasVoted(participant),
+                    })}
+                  />
+                  {hasVoted(participant) ? (
+                    <>
+                      <div className="absolute top-0 left-0 h-[300px] w-[300px] voted-gradient z-10 backdrop-blur-sm" />
+                      <div
+                        className="absolute top-0 left-0 w-full h-full z-20 flex flex-col px-4 pt-4 pb-8"
+                        style={{ background: 'url(/retrowave_figure.png)' }}
+                      >
                         <div>
-                          <div className="px-2 py-1 inline-flex items-center bg-black">
-                            <CheckmarkSquareOutline size={16} />
-                            <p className="text-sm ml-2 font-medium font-display uppercase">Voted</p>
+                          <img src={participant.thumbnail} className="w-12 h-12 object-cover" alt={`${participant.name} (Thumbnail)`} />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-end">
+                          <p className="text-3xl font-display font-medium text-void mb-3">{participant.name}</p>
+                          <div>
+                            <div className="px-2 py-1 inline-flex items-center bg-void">
+                              <CheckmarkSquareOutline size={16} />
+                              <p className="text-sm ml-2 font-medium font-display uppercase">Voted</p>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </>
+                  ) : (
+                    <div className="absolute top-0 left-0 h-[300px] w-[300px] bg-gradient-to-b from-transparent to-void z-10 flex items-end px-4 pt-4 pb-8 hover:opacity-90 transtion-opacity duration-200">
+                      <p className="text-2xl font-display font-medium">{participant.name}</p>
                     </div>
-                  </>
-                ) : (
-                  <div className="absolute top-0 left-0 h-[300px] w-[300px] bg-gradient-to-b from-transparent to-black z-10 flex items-end px-4 pt-4 pb-8 hover:opacity-90 transtion-opacity duration-200">
-                    <p className="text-2xl font-display font-medium">{participant.name}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      
+      <Particles />
+      <div className="absolute w-full h-full top-0 left-0 bg-[url('/space_spotlight.png')] bg-cover bg-center bg-no-repeat !z-0"></div>
     </div>
   );
 };

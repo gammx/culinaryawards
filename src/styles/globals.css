@@ -198,7 +198,7 @@ label {
 }
 
 .voted-gradient {
-	background: radial-gradient(50% 50% at 50% 50%, rgba(255, 97, 220, 0.8) 0%, rgba(255, 224, 194, 0.8) 64.06%, rgba(225, 237, 242, 0.8) 100%);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(255, 97, 220, 0.8) 0%, rgba(194, 200, 255, 0.8) 64.06%, rgba(225, 237, 242, 0.8) 100%);
 }
 
 .void-green-gradient {
