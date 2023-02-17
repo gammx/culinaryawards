@@ -1,4 +1,5 @@
 import { useSession } from 'next-auth/react';
+import { Particles } from '~/hooks/useParticles';
 import withAdminSession from '~/hoc/withAdminSession';
 import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard/next';
@@ -13,6 +14,7 @@ const Dashboard = () => {
 			className="w-screen h-screen flex flex-col relative bg-void"
 		>
 			<div className="absolute w-full h-full top-0 left-0 bg-[url('/space_grid.png')] bg-cover bg-center bg-no-repeat"></div>
+			<Particles />
 			<div className="flex flex-col basis-5/12 shrink-0">
 				<div className="border basis-1/12"></div>
 				<div className="border basis-11/12"></div>
