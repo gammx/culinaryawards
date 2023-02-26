@@ -1,16 +1,14 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline, HashOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
 import Select from 'react-select';
 import useZod from '~/hooks/useZod';
-import DataCard from '../DataCard';
-import IconButton from '~/components/UI/IconButton';
-import HighlightedIcon from '~/components/UI/HighlightedIcon';
 import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
+import DashboardPanel from '../DashboardPanel';
 
 interface Option {
   label: string;
@@ -141,7 +139,8 @@ const ParticipantsCard = () => {
   }, [participantTarget, categories]);
 
   /** It executes the delete mutation */
-  const participantDeleteAction = () => {
+  const deleteParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     participantTarget && participantDelete.mutate({ participantId: participantTarget.id });
   };
 
@@ -159,7 +158,8 @@ const ParticipantsCard = () => {
   };
 
   /** It executes the create mutation if the introduced values are valid */
-  const createParticipant = () => {
+  const createParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     const isAllowed = validate(participantCreatable);
     isAllowed && participantCreate.mutate(participantCreatable);
   };
@@ -179,7 +179,8 @@ const ParticipantsCard = () => {
   };
 
   /** It executes the edit mutation if the introduced values are valid */
-  const editParticipant = () => {
+  const editParticipant: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
     const isAllowed = validate(participantEditable);
     isAllowed && participantEdit.mutate(participantEditable);
   };
@@ -199,33 +200,23 @@ const ParticipantsCard = () => {
   };
 
   return (
-    <>
+    <DashboardPanel.Card>
       {views.current === 'list' && (
-        <DataCard.Root className="border-r border-r-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar
-              title="Participants"
-            >
-              <IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-              <IconButton icon={FunnelOutline} />
-            </DataCard.TitleBar>
-            <div className="px-8">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full rounded-full"
-              />
-            </div>
-          </DataCard.Header>
-          <DataCard.Content className="px-8">
+        <>
+          <DashboardPanel.Titlebar title="Participants">
+            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
+            <DashboardPanel.IconButton icon={FunnelOutline} />
+          </DashboardPanel.Titlebar>
+          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Content>
             <ul
-              className="flex flex-col space-y-1"
+              className="flex flex-col space-y-1 text-bone-muted"
             >
               {participants && participants.length > 0 &&
                 participants.map((participant) => (
                   <li
                     key={participant.id}
-                    className="flex space-x-4 items-center cursor-pointer hover:bg-white/20 rounded-lg p-2"
+                    className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
                     onClick={() => goToProfile(participant)}
                   >
                     <img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
@@ -234,20 +225,19 @@ const ParticipantsCard = () => {
                 ))
               }
             </ul>
-          </DataCard.Content>
-        </DataCard.Root>
+          </DashboardPanel.Content>
+        </>
       )}
 
+      {/** PARTICIPANT ADD ----------------------------------------- */}
       {views.current === 'add' && (
-        <DataCard.Root className="border-r border-r-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar
-              title="Add Participant"
-              onBack={cancelCreateParticipant}
-            ></DataCard.TitleBar>
-          </DataCard.Header>
-          <DataCard.Content className="px-8 h-full w-full overflow-y-auto">
-            <div className="w-full">
+        <>
+          <DashboardPanel.Titlebar
+            title="Add Participant"
+            onBack={cancelCreateParticipant}
+          />
+          <DashboardPanel.Content>
+            <form onSubmit={createParticipant}>
               <fieldset >
                 <label htmlFor="thumbnail">Picture *</label>
                 <input ref={creatableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadCreatableAvatar} className="hidden" />
@@ -259,7 +249,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="name">Name *</label>
-                <input
+                <DashboardPanel.Input
                   id="name"
                   type="text"
                   value={participantCreatable.name}
@@ -269,7 +259,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="direction">Direction *</label>
-                <input
+                <DashboardPanel.Input
                   id="direction"
                   type="text"
                   value={participantCreatable.direction}
@@ -279,7 +269,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="website">Website</label>
-                <input
+                <DashboardPanel.Input
                   id="website"
                   type="text"
                   value={participantCreatable.website}
@@ -289,7 +279,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="mapsAnchor">Google Maps URL</label>
-                <input
+                <DashboardPanel.Input
                   id="mapsAnchor"
                   type="text"
                   value={participantCreatable.mapsAnchor}
@@ -312,60 +302,57 @@ const ParticipantsCard = () => {
                 />
                 {errors.categoryIds && <span className="text-red text-sm">{errors.categoryIds}</span>}
               </fieldset>
-              <Button variant="success" onClick={createParticipant}>Add</Button>
-            </div>
-          </DataCard.Content>
-        </DataCard.Root>
+              <Button variant="primary" type="submit">Add</Button>
+            </form>
+          </DashboardPanel.Content>
+        </>
       )}
 
       {views.current === 'profile' && participantTarget && (
-        <DataCard.Root className="border-r border-r-white/20">
-          <DataCard.Header>
-            <DataCard.TitleBar
-              title={participantTarget.name}
-              onBack={() => {
-                setParticipantTarget(null);
-                views.goBack();
-              }}
-            ></DataCard.TitleBar>
-          </DataCard.Header>
-          <DataCard.Content>
-            <DataCard.Tabs state={[profileTab, changeProfileTab]}>
-              {/** PARTICIPANT INFO ----------------------------------------- */}
-              <DataCard.Tab value="info">
-                {participantTarget.website && <DataCard.Anchor href={participantTarget.website} />}
-                {participantTarget.mapsAnchor && <DataCard.Anchor icon="maps" href={participantTarget.mapsAnchor} />}
-                <div className="ml-8 mt-8 flex">
-                  <HighlightedIcon icon={HashOutline} variant="pink" />
-                  <div className="flex flex-col space-y-2">
-                    <p className="font-medium">Categories</p>
-                    <ul className="text-sm">
-                      {isCategoriesFetching
-                        ? <li>Loading...</li>
-                        : (categories && participantTarget.categoryIds.length > 0)
-                          ? categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
-                            <li key={category.id}>{category.name}</li>
-                          ))
-                          : <li>No categories yet</li>
-                      }
-                    </ul>
-                  </div>
-                </div>
-              </DataCard.Tab>
-              {/** PARTICIPANT EDIT ----------------------------------------- */}
-              <DataCard.Tab value="edit" className="px-8">
+        <>
+          <DashboardPanel.Tabs state={[profileTab, setProfileTab]} onBack={() => {
+            setProfileTab('info');
+            setParticipantTarget(null);
+            views.goBack();
+          }}>
+            {/** PARTICIPANT INFO ----------------------------------------- */}
+            <DashboardPanel.Tab value="info">
+              <DashboardPanel.Profile
+                name={participantTarget.name}
+                thumbnail={participantTarget.thumbnail}
+                siteAnchor={participantTarget.website}
+                mapsAnchor={participantTarget.mapsAnchor}
+              />
+              <div className="mt-11">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
+                <ul className="text-sm text-ink mt-5">
+                  {isCategoriesFetching
+                    ? <li>Loading...</li>
+                    : (categories && participantTarget.categoryIds.length > 0)
+                      ? categories.filter((category) => participantTarget.categoryIds.includes(category.id)).map((category) => (
+                        <li key={category.id}>{category.name}</li>
+                      ))
+                      : <li>No categories yet</li>
+                  }
+                </ul>
+              </div>
+            </DashboardPanel.Tab>
+
+            {/** PARTICIPANT EDIT ----------------------------------------- */}
+            <DashboardPanel.Tab value="edit">
+              <form onSubmit={editParticipant}>
                 <fieldset>
                   <label htmlFor="thumbnail">Picture</label>
                   <input ref={editableAvatarRef} id="thumbnail" type="file" accept="image/png, image/jpeg" onChange={uploadEditableAvatar} className="hidden" />
                   <div className="pb-6 relative">
                     <img src={participantEditable.thumbnail} alt={`${participantEditable.name} (Thumbnail)`} className="w-20 h-20 rounded-circle object-cover" />
                   </div>
-                  <Button onClick={() => editableAvatarRef.current?.click()}>Upload</Button>
+                  <Button variant="tertiary" onClick={() => editableAvatarRef.current?.click()}>Upload</Button>
                   {errors.thumbnail && <p className="text-xs text-red-500 mt-2">{errors.thumbnail}</p>}
                 </fieldset>
                 <fieldset>
                   <label htmlFor="name">Name</label>
-                  <input
+                  <DashboardPanel.Input
                     id="name"
                     type="text"
                     value={participantEditable.name}
@@ -375,7 +362,7 @@ const ParticipantsCard = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="direction">Direction</label>
-                  <input
+                  <DashboardPanel.Input
                     id="direction"
                     type="text"
                     value={participantEditable.direction || ''}
@@ -385,7 +372,7 @@ const ParticipantsCard = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="website">Website</label>
-                  <input
+                  <DashboardPanel.Input
                     id="website"
                     type="text"
                     value={participantEditable.website || ''}
@@ -394,7 +381,7 @@ const ParticipantsCard = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="mapsAnchor">Google Maps URL</label>
-                  <input
+                  <DashboardPanel.Input
                     id="mapsAnchor"
                     type="text"
                     value={participantEditable.mapsAnchor || ''}
@@ -412,30 +399,34 @@ const ParticipantsCard = () => {
                     isMulti
                     isSearchable
                     menuPlacement={'auto'}
+                    menuPosition={'fixed'}
                     className="react-select-container"
                     classNamePrefix="react-select"
                   />
                   {errors.categoryIds && <p className="text-xs text-red-500 mt-2">{errors.categoryIds}</p>}
                 </fieldset>
                 <div className="flex space-x-2">
-                  <Button variant="secondary" onClick={editParticipant}>Save</Button>
+                  <Button variant="primary" type="submit">Save</Button>
                   <Button onClick={() => changeProfileTab('info')}>Cancel</Button>
                 </div>
-              </DataCard.Tab>
-              {/** PARTICIPANT DELETE ----------------------------------------- */}
-              <DataCard.Tab value="delete" className="px-8">
+              </form>
+            </DashboardPanel.Tab>
+
+            {/** PARTICIPANT DELETE ----------------------------------------- */}
+            <DashboardPanel.Tab value="delete">
+              <form onSubmit={deleteParticipant}>
                 <fieldset className="h-full">
                   <label>Delete Participant</label>
-                  <p className="text-sm">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
+                  <p className="text-sm text-ink/80">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
                   <br />
-                  <Button variant="danger" onClick={participantDeleteAction}>Delete</Button>
+                  <Button variant="danger" type="submit">Delete</Button>
                 </fieldset>
-              </DataCard.Tab>
-            </DataCard.Tabs>
-          </DataCard.Content>
-        </DataCard.Root>
+              </form>
+            </DashboardPanel.Tab>
+          </DashboardPanel.Tabs>
+        </>
       )}
-    </>
+    </DashboardPanel.Card>
   );
 };
 

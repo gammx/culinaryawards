@@ -78,6 +78,27 @@ body {
 	font-family: 'Aeonik', sans-serif;
 }
 
+@layer utilities {
+  .dashboard-card-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+		transition: all 200ms ease;
+  }
+
+  .dashboard-card-scrollbar::-webkit-scrollbar-track {
+		border: 1px solid rgb(33, 41, 49, 0.1);
+  }
+
+  .dashboard-card-scrollbar::-webkit-scrollbar-thumb {
+    border: 1px solid rgb(33, 41, 49, 0.5);
+		border-radius: 4px;
+  }
+
+  .dashboard-card-scrollbar::-webkit-scrollbar-thumb:hover {
+    border-color: rgb(33, 41, 49, 0.8);
+  }
+}
+
 fieldset {
 	@apply flex flex-col space-y-2 mb-4;
 }
@@ -86,52 +107,74 @@ label {
 	@apply font-bold text-sm uppercase;
 }
 
-input {
+/*input {
 	@apply bg-gradient-to-r from-white/30 via-white/50 to-white/30 rounded-xl bg-transparent px-6 py-2 text-sm focus:outline-2 focus:outline-white/30 outline-none;
-}
+}*/
 
 .react-select__indicators span {
-	@apply bg-black/20;
+	background-color: #0A1419;
 }
 
 .react-select__indicators svg {
-	@apply text-black/20;
+	color: #497286;
 }
 
 .react-select__control {
-	@apply !bg-white/30 !border !border-white/50 !rounded-md;
+	background-color: rgb(8, 17, 22, 0.3) !important;
+	border: 1px solid #0A1419 !important;
+	border-radius: 0px !important;
 }
 
 .react-select__control:hover {
-	@apply border-white/30 cursor-pointer !important;
+	outline: 1px solid rgb(10, 20, 25, 0.5) !important;
+	outline-offset: 2px !important;
+	cursor: pointer !important;
 }
 
 .react-select__placeholder {
-	@apply !text-black/20;
+	color: #96B1BA !important;
+	font-size: 14px;
 }
 
 .react-select__control--is-focused {
-	box-shadow: 0 0 0 1px #fff !important;
+	box-shadow: 0 0 0 1px rgb(10, 20, 25, 1) !important;
 }
 
 .react-select__menu {
-	@apply !bg-black backdrop-blur-lg !rounded-lg !px-2 !py-1 !shadow-none !font-light !text-neutral-400 !text-sm;
+	background-color: #040B0E !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	color: #96B1BA !important;
+	opacity: 1 !important;
+	border: 1px solid #0A1419 !important;
 }
 
-.react-select__option {
-	@apply !rounded-md !px-3;
+.react-select__option:not(:last-child) {
+	border-bottom: 1px solid #0A1419 !important;
 }
 
 .react-select__menu-list {
-	@apply !px-0;
+	padding-top: 0px !important;
+	padding-bottom: 0px !important;
+	border-radius: 8px !important;
 }
 
 .react-select__option--is-focused {
-	@apply !bg-neutral-900/30 !text-white !cursor-pointer;
+	color: #cef1fd !important;
+	cursor: pointer !important;
+	background-color: rgb(8, 17, 22, 0.3) !important;
 }
 
 .react-select__multi-value {
-	@apply !bg-white/30 !rounded-md !outline-none !px-1 !font-bold !uppercase !text-sm !border !border-white/60;
+	border: 1px solid #0A1419 !important;
+	font-size: 12px !important;
+	font-weight: 500 !important;
+	border-radius: 6px !important;
+	text-transform: uppercase !important;
+	color: #96B1BA !important;
+	outline: none !important;
+	padding: 0 2px !important;
+	background-color: transparent !important;
 }
 
 .react-select__multi-value__remove {
@@ -139,7 +182,7 @@ input {
 }
 
 .react-select__multi-value__label {
-	@apply !text-black;
+	color: #96B1BA !important;
 }
 
 .IconButton {
@@ -155,5 +198,29 @@ input {
 }
 
 .voted-gradient {
-	background: radial-gradient(50% 50% at 50% 50%, rgba(255, 97, 220, 0.8) 0%, rgba(255, 224, 194, 0.8) 64.06%, rgba(225, 237, 242, 0.8) 100%);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(255, 97, 220, 0.8) 0%, rgba(194, 200, 255, 0.8) 64.06%, rgba(225, 237, 242, 0.8) 100%);
+}
+
+.dashboard-card-bg {
+	background: linear-gradient(221.46deg, rgba(2, 7, 10, 0) 0%, #050D11 100%);
+}
+
+.card-search-bg:hover {
+	background: linear-gradient(90deg, #071015 0%, rgba(7, 16, 21, 0) 50%, #071015 100%);
+}
+
+.vertical-rl {
+	writing-mode: vertical-rl;
+}
+
+.dashboard-card-tab label, .dashboard-card-content label {
+	font-family: 'SohneBreit', sans-serif;
+	color: #b7ccd8;
+	font-weight: bold;
+	letter-spacing: 0.1em;
+	font-size: 11px;
+}
+
+.dashboard-card-tab fieldset, .dashboard-card-content fieldset {
+	padding: 4px 0;
 }
