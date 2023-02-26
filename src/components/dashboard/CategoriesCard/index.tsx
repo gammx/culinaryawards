@@ -197,7 +197,7 @@ const Categories = () => {
   };
 
   return (
-    <DashboardPanel.Card className="void-green-gradient">
+    <DashboardPanel.Card>
       {views.current === 'list' && (
         <>
           <DashboardPanel.Titlebar
