@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+
+* {
+	-webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 @font-face {
 	font-family: 'PierSans';
 	src: url('/fonts/PierSans/PierSans-Regular.woff2') format('woff2');
@@ -53,6 +59,14 @@
 @font-face {
 	font-family: 'SohneBreit';
 	src: url('/fonts/SohneBreit/Sohne-Kraftig.woff2') format('woff2');
+	font-display: swap;
+	font-style: normal;
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: 'Sohne';
+	src: url('/fonts/SohneBreit/Sohne.woff2') format('woff2');
 	font-display: swap;
 	font-style: normal;
 	font-weight: 400;
@@ -223,4 +237,8 @@ label {
 
 .dashboard-card-tab fieldset, .dashboard-card-content fieldset {
 	padding: 4px 0;
+}
+
+.dashboard-icon-card {
+	background: radial-gradient(50% 50% at 50% 50%, rgba(12, 16, 21, 0) 0%, #0C1116 100%);
 }

@@ -4,6 +4,7 @@ import withAdminSession from '~/hoc/withAdminSession';
 import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard';
 import CategoriesCard from '~/components/dashboard/CategoriesCard';
+import ActivityCard from '~/components/dashboard/ActivityCard';
 
 const Dashboard = () => {
 	const { data } = useSession();
@@ -23,8 +24,9 @@ const Dashboard = () => {
 				<DashboardPanel.Root className="basis-3/12">
 					<ParticipantsCard />
 				</DashboardPanel.Root>
-				<section className="basis-6/12">
-				</section>
+				<DashboardPanel.Root className="basis-6/12">
+					<ActivityCard />
+				</DashboardPanel.Root>
 				<DashboardPanel.Root className="basis-3/12">
 					<CategoriesCard />
 				</DashboardPanel.Root>
