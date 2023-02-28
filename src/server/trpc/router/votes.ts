@@ -23,6 +23,12 @@ export const votesRouter = router({
 				await ctx.prisma.votes.createMany({
 					data: votesWithUserId,
 				});
+
+				// Generate activity log
+				await ctx.prisma.logs.create({ data: {
+					type: "VOTE",
+					invokerId: userId
+				} });
 	
 				return true;
 			}

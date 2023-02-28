@@ -102,3 +102,17 @@ model Votes {
   @@unique([participantId, categoryId])
   @@map("votes")
 }
+
+enum LogType {
+  REGISTER
+  VOTE
+}
+
+model Logs {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      LogType
+  invokerId String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@map("logs")
+}
