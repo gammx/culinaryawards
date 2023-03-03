@@ -1,6 +1,5 @@
-import { sendVotesSchema } from "~/utils/schemas/votes";
+import { getVotesSchema, sendVotesSchema } from "~/utils/schemas/votes";
 import { router, adminProcedure, publicProcedure } from "../trpc";
-import { z } from "zod";
 
 export const votesRouter = router({
 	sendVotes: publicProcedure
@@ -43,6 +42,14 @@ export const votesRouter = router({
 			} else {
 				throw new Error("You're not logged in");
 			}
+		}),
+	getVotes: adminProcedure
+		.input(getVotesSchema)
+		.query(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.findMany({ where: { userId }, include: { category: true, participant: true } });
+			
+			return votes;
 		}),
 	hasAlreadyVoted: publicProcedure
 		.query(async ({ ctx }) => {

@@ -6,3 +6,7 @@ export const sendVotesSchema = z.object({
 		categoryId: z.string(),
 	})),
 });
+
+export const getVotesSchema = z.object({
+	userId: z.string(),
+});
