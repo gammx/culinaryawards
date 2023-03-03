@@ -1,7 +1,8 @@
 import React from 'react';
 import DashboardPanel from "~/components/dashboard/DashboardPanel";
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { PersonAddOutline, CheckmarkSquareOutline } from '@styled-icons/evaicons-outline';
+import type { LogType } from '@prisma/client';
+import { PersonAddOutline, CheckmarkSquareOutline, BarChartOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
 import cn from 'classnames';
 
@@ -10,11 +11,21 @@ const ActivityCard = () => {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
+  const getLogTypeStr = (type: LogType) => {
+    switch (type) {
+      case 'VOTE':
+        return 'voted';
+      case 'REGISTER':
+        return 'registered';
+    }
+  };
+
   return (
     <DashboardPanel.Card className="!flex-row">
       <div className="flex flex-col basis-6/12">
         <DashboardPanel.Titlebar
           title="Activity"
+          className="!m-0"
         ></DashboardPanel.Titlebar>
         {/**
          * Remove Content custom horizontal padding/margin so we can use the provided one by the Card component,
@@ -25,11 +36,12 @@ const ActivityCard = () => {
             dataLength={data?.pages.length || 0}
             next={fetchNextPage}
             hasMore={!!hasNextPage}
-            loader={<h4>Loading...</h4>}
+            loader={<p className="text-center text-sm mt-6 mb-6 text-bone-muted/50">Loading...</p>}
             endMessage={
-              <p style={{ textAlign: 'center' }}>
-                <b>Yay! You have seen it all</b>
-              </p>
+              <div className="flex flex-col space-y-2 items-center text-sm mt-6 mb-6 text-bone-muted/50">
+                <BarChartOutline size={24} />
+                <p>You have reached the end</p>
+              </div>
             }
             scrollableTarget="scrollableContainer"
           >
@@ -40,9 +52,9 @@ const ActivityCard = () => {
                     <li className="flex items-center" key={log.id}>
                       <img src="/pfp.jpg" alt="" className="w-6 h-6 rounded-full object-cover mr-5" />
                       <p className="text-bone flex space-x-1">
-                        <span>{log.invokerId}</span>
+                        <span>{log.invoker.name || log.invoker.email?.split('@')[0]}</span>
                         <span className="text-bone-muted opacity-50">has recently</span>
-                        <span className="text-[#FF8DFA] cursor-pointer hover:underline">{log.type}</span>
+                        <span className="text-[#FF8DFA] cursor-pointer hover:underline">{getLogTypeStr(log.type)}</span>
                       </p>
                     </li>
                   );

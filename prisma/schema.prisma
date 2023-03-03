@@ -51,6 +51,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   votes         Votes[]
+  logs          Logs[]
 
   @@map("users")
 }
@@ -112,6 +113,7 @@ model Logs {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   type      LogType
   invokerId String   @db.ObjectId
+  invoker   User     @relation(fields: [invokerId], references: [id])
   createdAt DateTime @default(now())
 
   @@map("logs")

@@ -13,6 +13,9 @@ export const logsRouter = router({
 				orderBy: {
 					id: "desc",
 				},
+				include: {
+					invoker: true,
+				}
 			});
 
 			let nextCursor: string | null = null;
