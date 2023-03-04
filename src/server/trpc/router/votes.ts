@@ -1,8 +1,8 @@
 import { getVotesSchema, sendVotesSchema } from "~/utils/schemas/votes";
-import { router, adminProcedure, publicProcedure } from "../trpc";
+import { router, adminProcedure, publicProcedure, protectedProcedure } from "../trpc";
 
 export const votesRouter = router({
-	sendVotes: publicProcedure
+	sendVotes: protectedProcedure
 		.input(sendVotesSchema)
 		.mutation(async ({ ctx, input }) => {
 			const { votes } = input;
@@ -32,7 +32,7 @@ export const votesRouter = router({
 				return true;
 			}
 		}),
-	getMyVotes: publicProcedure
+	getMyVotes: protectedProcedure
 		.query(async ({ ctx }) => {
 			if (ctx.session?.user) {
 				const userId = ctx.session.user.id;
@@ -51,7 +51,15 @@ export const votesRouter = router({
 			
 			return votes;
 		}),
-	hasAlreadyVoted: publicProcedure
+	removeVotes: adminProcedure
+		.input(getVotesSchema)
+		.mutation(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.deleteMany({ where: { userId } });
+			
+			return votes;
+		}),
+	hasAlreadyVoted: protectedProcedure
 		.query(async ({ ctx }) => {
 			if (ctx.session?.user) {
 				const userId = ctx.session.user.id;
@@ -61,5 +69,13 @@ export const votesRouter = router({
 			} else {
 				throw new Error("You're not logged in");
 			}
+		}),
+	hasVotes: adminProcedure
+		.input(getVotesSchema)
+		.query(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.findFirst({ where: { userId } });
+			
+			return !!votes;
 		}),
 });

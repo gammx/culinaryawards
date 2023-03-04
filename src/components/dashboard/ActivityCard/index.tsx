@@ -2,9 +2,11 @@ import React from 'react';
 import DashboardPanel from "~/components/dashboard/DashboardPanel";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import cn from 'classnames';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Category, Logs, LogType, Participant, User, Votes } from '@prisma/client';
 import { PersonAddOutline, CheckmarkSquareOutline, BarChartOutline, EmailOutline, HashOutline, CloseSquareOutline, PersonDeleteOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
+import Button from '~/components/UI/Button';
 
 
 interface CachedVotes {
@@ -21,6 +23,9 @@ const ActivityCard = () => {
     refetchOnWindowFocus: false,
   });
   const [expandedLog, setExpandedLog] = React.useState<Logs & { invoker: User; } | null>(null);
+  // Check if the invoker of the currently expanded log has already voted to prevent removing unexisting votes
+  const { data: hasInvokerVoted, refetch: refetchHasUserVoted } = trpc.votes.hasVotes.useQuery({ userId: expandedLog?.invokerId! });
+  const votesRemove = trpc.votes.removeVotes.useMutation();
   // We cache the votes so we don't have to refetch them when the user clicks on the same user again
   const [cachedVotes, setCachedVotes] = React.useState<CachedVotes>({});
   const { isRefetching: isRefetchingVotes } = trpc.votes.getVotes.useQuery({ userId: expandedLog?.invokerId! }, {
@@ -43,6 +48,14 @@ const ActivityCard = () => {
       case 'REGISTER':
         return 'registered';
     }
+  };
+
+  /** Removes the expanded log invoker votes */
+  const removeVotes = async () => {
+    if (!expandedLog?.invokerId) return;
+
+    await votesRemove.mutateAsync({ userId: expandedLog.invokerId });
+    refetchHasUserVoted();
   };
 
   /** Returns the side view content based on the log type */
@@ -93,24 +106,50 @@ const ActivityCard = () => {
                 </div>
               </div>
               <div className="flex space-x-2.5">
-                <button
+                <a
                   className="w-8 h-8 flex items-center justify-center neon-shadow--blue border border-neon-blue text-neon-blue rounded-xl hover:opacity-80"
                   title={`Contact ${expandedLog.invoker.email}`}
+                  href={`mailto:${expandedLog.invoker.email}`}
                 >
                   <EmailOutline size={16} />
-                </button>
+                </a>
                 <button
                   className="w-8 h-8 flex items-center justify-center neon-shadow--yellow border border-neon-yellow text-neon-yellow rounded-xl hover:opacity-80"
                   title="Copy ID"
+                  onClick={() => navigator.clipboard.writeText(expandedLog.invoker.id)}
                 >
                   <HashOutline size={16} />
                 </button>
-                <button
-                  className={cn("w-8 h-8 flex items-center justify-center neon-shadow--pink border border-neon-pink text-neon-pink rounded-xl hover:opacity-80")}
-                  title="Remove User Votes"
-                >
-                  <CloseSquareOutline size={16} />
-                </button>
+                <AlertDialog.Root>
+                  <AlertDialog.Trigger asChild disabled={!hasInvokerVoted}>
+                    <button
+                      className={cn("w-8 h-8 flex items-center justify-center neon-shadow--pink border border-neon-pink text-neon-pink rounded-xl hover:opacity-80", {
+                        'opacity-30 pointer-events-none': !hasInvokerVoted,
+                      })}
+                      title="Remove User Votes"
+                    >
+                      <CloseSquareOutline size={16} />
+                    </button>
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Portal>
+                    <AlertDialog.Overlay className="bg-void/70 inset-0 fixed z-50" />
+                    <AlertDialog.Content className="bg-void-high/30 border border-linear/10 backdrop-blur rounded-xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-[450px] max-h-[85vh] p-6 focus:outline-none z-50">
+                      <AlertDialog.Title className="m-0 text-white font-medium font-display text-xl mb-2">Remove Votes</AlertDialog.Title>
+                      <AlertDialog.Description className="text-bone-muted mb-8 leading-6 text-sm">
+                        This action cannot be undone, this will remove all the votes sent by this user.
+                      </AlertDialog.Description>
+                      <div className="flex space-x-2.5">
+                        <AlertDialog.Cancel asChild>
+                          <Button outlined variant="tertiary">Cancel</Button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action asChild>
+                          <Button className="!border-neon-pink !text-neon-pink" outlined onClick={removeVotes}>Remove</Button>
+                        </AlertDialog.Action>
+                      </div>
+                    </AlertDialog.Content>
+                  </AlertDialog.Portal>
+                </AlertDialog.Root>
+
                 <button
                   className="w-8 h-8 flex items-center justify-center neon-shadow--purple border border-neon-purple text-neon-purple rounded-xl hover:opacity-80"
                   title="Delete User"
@@ -132,9 +171,9 @@ const ActivityCard = () => {
           className="!m-0"
         ></DashboardPanel.Titlebar>
         {/**
-         * Remove Content custom horizontal padding/margin so we can use the provided one by the Card component,
-         * as we are just using Content as an scrollable container.
-        */}
+       * Remove Content custom horizontal padding/margin so we can use the provided one by the Card component,
+       * as we are just using Content as an scrollable container.
+      */}
         <DashboardPanel.Content id="scrollableContainer" className="!mx-0 !px-0">
           <InfiniteScroll
             dataLength={data?.pages.length || 0}
