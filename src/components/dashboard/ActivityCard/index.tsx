@@ -3,7 +3,7 @@ import DashboardPanel from "~/components/dashboard/DashboardPanel";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import cn from 'classnames';
 import type { Category, Logs, LogType, Participant, User, Votes } from '@prisma/client';
-import { PersonAddOutline, CheckmarkSquareOutline, BarChartOutline } from '@styled-icons/evaicons-outline';
+import { PersonAddOutline, CheckmarkSquareOutline, BarChartOutline, EmailOutline, HashOutline, CloseSquareOutline, PersonDeleteOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
 
 
@@ -77,6 +77,48 @@ const ActivityCard = () => {
                 </ul>
               )}
             </DashboardPanel.Content>
+          </>
+        );
+      case 'REGISTER':
+        return (
+          <>
+            <DashboardPanel.Titlebar title="Profile" onBack={() => setExpandedLog(null)}></DashboardPanel.Titlebar>
+            <div className="flex flex-col space-y-5 items-center">
+              <img src="/pfp.jpg" alt="" className="w-20 h-20 rounded-full object-cover mt-6" />
+              <div>
+                <p className="text-bone text-center font-display text-lg">{expandedLog.invoker.name || expandedLog.invoker.email?.split('@')[0]}</p>
+                <div className="flex items-center justify-center space-x-2 text-bone-muted">
+                  <SmilingFaceOutline size={16} />
+                  <p className="text-xs uppercase">{expandedLog.invoker.role}</p>
+                </div>
+              </div>
+              <div className="flex space-x-2.5">
+                <button
+                  className="w-8 h-8 flex items-center justify-center neon-shadow--blue border border-neon-blue text-neon-blue rounded-xl hover:opacity-80"
+                  title={`Contact ${expandedLog.invoker.email}`}
+                >
+                  <EmailOutline size={16} />
+                </button>
+                <button
+                  className="w-8 h-8 flex items-center justify-center neon-shadow--yellow border border-neon-yellow text-neon-yellow rounded-xl hover:opacity-80"
+                  title="Copy ID"
+                >
+                  <HashOutline size={16} />
+                </button>
+                <button
+                  className={cn("w-8 h-8 flex items-center justify-center neon-shadow--pink border border-neon-pink text-neon-pink rounded-xl hover:opacity-80")}
+                  title="Remove User Votes"
+                >
+                  <CloseSquareOutline size={16} />
+                </button>
+                <button
+                  className="w-8 h-8 flex items-center justify-center neon-shadow--purple border border-neon-purple text-neon-purple rounded-xl hover:opacity-80"
+                  title="Delete User"
+                >
+                  <PersonDeleteOutline size={16} />
+                </button>
+              </div>
+            </div>
           </>
         );
     }
