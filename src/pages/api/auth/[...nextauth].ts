@@ -15,10 +15,20 @@ export const authOptions: NextAuthOptions = {
         session.user.role = user.role;
       }
       return session;
-    },
+    }
   },
   // Configure one or more authentication providers
   adapter: PrismaAdapter(prisma),
+  events: {
+    async createUser({ user }) {
+      await prisma.logs.create({
+        data: {
+          type: "REGISTER",
+          invokerId: user.id,
+        }
+      });
+    },
+  },
   providers: [
     EmailProvider({
       server: {
@@ -29,6 +39,7 @@ export const authOptions: NextAuthOptions = {
         }
       },
       from: env.EMAIL_FROM,
+
     })
   ],
 };

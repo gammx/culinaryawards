@@ -17,6 +17,8 @@ interface CachedVotes {
 const ActivityCard = () => {
   const { data, hasNextPage, fetchNextPage, status } = trpc.logs.getActivityLogs.useInfiniteQuery({}, {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    refetchInterval: 1000 * 30, // 30 seconds
+    refetchOnWindowFocus: false,
   });
   const [expandedLog, setExpandedLog] = React.useState<Logs & { invoker: User; } | null>(null);
   // We cache the votes so we don't have to refetch them when the user clicks on the same user again
