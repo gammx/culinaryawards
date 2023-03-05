@@ -27,7 +27,8 @@ interface CachedVotes {
 type Log = Logs & { invoker: User; };
 
 const ActivityCard = () => {
-  const { data, hasNextPage, fetchNextPage, status } = trpc.logs.getActivityLogs.useInfiniteQuery({}, {
+  const utils = trpc.useContext();
+  const { data: activityLogs, hasNextPage, fetchNextPage, status } = trpc.logs.getActivityLogs.useInfiniteQuery({}, {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 1000 * 30, // 30 seconds
     refetchOnWindowFocus: false,
@@ -36,7 +37,28 @@ const ActivityCard = () => {
   // Check if the invoker of the currently expanded log has already voted to prevent removing unexisting votes
   const { data: hasInvokerVoted, refetch: refetchHasUserVoted } = trpc.votes.hasVotes.useQuery({ userId: expandedLog?.invokerId! });
   const votesRemove = trpc.votes.removeVotes.useMutation();
-  const userRemove = trpc.auth.deleteUser.useMutation();
+  const userRemove = trpc.auth.deleteUser.useMutation({
+    async onMutate(variables) {
+      // Handle optimistic update, removing the logs invoked by the user we're removing
+      await utils.logs.getActivityLogs.cancel();
+      const prevData = utils.logs.getActivityLogs.getInfiniteData();
+      utils.logs.getActivityLogs.setInfiniteData({ cursor: undefined }, (prev) => ({
+        pageParams: prev?.pageParams || [],
+        pages: prev?.pages.map((page) => {
+          return {
+            ...page,
+            logs: page.logs.filter((log) => log.invokerId !== variables.userId),
+          };
+        }) || []
+      }));
+      
+      setExpandedLog(null);
+      return { prevData };
+    },
+    onError(err, variables, context) {
+      context && utils.logs.getActivityLogs.setInfiniteData({ cursor: undefined }, context.prevData);
+    }
+  });
   // We cache the votes so we don't have to refetch them when the user clicks on the same user again
   const [cachedVotes, setCachedVotes] = React.useState<CachedVotes>({});
   const { isRefetching: isRefetchingVotes, error: refetchingVotesError } = trpc.votes.getVotes.useQuery({ userId: expandedLog?.invokerId! }, {
@@ -81,8 +103,6 @@ const ActivityCard = () => {
   /** Removes the expanded log invoker */
   const removeUser = async () => {
     if (!expandedLog?.invokerId) return;
-
-    setExpandedLog(null);
     userRemove.mutate({ userId: expandedLog.invokerId });
   };
 
@@ -249,7 +269,7 @@ const ActivityCard = () => {
       */}
         <DashboardPanel.Content id="scrollableContainer" className="!mx-0 !px-0">
           <InfiniteScroll
-            dataLength={data?.pages.length || 0}
+            dataLength={activityLogs?.pages.length || 0}
             next={fetchNextPage}
             hasMore={!!hasNextPage}
             loader={<p className="text-center text-sm mt-6 mb-6 text-bone-muted/50">Loading...</p>}
@@ -262,7 +282,7 @@ const ActivityCard = () => {
             scrollableTarget="scrollableContainer"
           >
             <ul className="flex flex-col space-y-4 text-sm">
-              {data?.pages.map((page) => {
+              {activityLogs?.pages.map((page) => {
                 return page.logs.map((log) => {
                   return (
                     <li className="flex items-center" key={log.id}>
