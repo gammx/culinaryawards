@@ -48,6 +48,10 @@ export const votesRouter = router({
 		.query(async ({ ctx, input }) => {
 			const { userId } = input;
 			const votes = await ctx.prisma.votes.findMany({ where: { userId }, include: { category: true, participant: true } });
+
+			if (votes.length === 0) {
+				throw new Error("VOTES_NOT_FOUND");
+			}
 			
 			return votes;
 		}),

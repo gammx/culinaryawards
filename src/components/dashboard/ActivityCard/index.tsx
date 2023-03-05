@@ -28,9 +28,16 @@ const ActivityCard = () => {
   const votesRemove = trpc.votes.removeVotes.useMutation();
   // We cache the votes so we don't have to refetch them when the user clicks on the same user again
   const [cachedVotes, setCachedVotes] = React.useState<CachedVotes>({});
-  const { isRefetching: isRefetchingVotes } = trpc.votes.getVotes.useQuery({ userId: expandedLog?.invokerId! }, {
+  const { isRefetching: isRefetchingVotes, error: refetchingVotesError } = trpc.votes.getVotes.useQuery({ userId: expandedLog?.invokerId! }, {
     // Don't fetch any vote until the user clicks on some user
     enabled: !!expandedLog && expandedLog.type === 'VOTE' && !cachedVotes[expandedLog.invokerId],
+    refetchOnWindowFocus: false,
+    retry(failureCount, error) {
+      // Don't retry if the user has no votes
+      if (error?.message === 'VOTES_NOT_FOUND') return false;
+
+      return true;
+    },
     onSuccess(data) {
       const userId = data[0]?.userId;
       if (!userId) return;
@@ -74,7 +81,7 @@ const ActivityCard = () => {
               </div>
             </DashboardPanel.Titlebar>
             <DashboardPanel.Content id="scrollableContainer" className="!mx-0 !px-0">
-              {!cachedVotes[expandedLog.invokerId] || isRefetchingVotes ? (
+              {(!cachedVotes[expandedLog.invokerId] || isRefetchingVotes) && !refetchingVotesError ? (
                 <p className="text-center text-sm mt-6 mb-6 text-bone-muted/50">Loading...</p>
               ) : (
                 <ul className="flex flex-col space-y-6">
@@ -88,6 +95,17 @@ const ActivityCard = () => {
                     </li>
                   ))}
                 </ul>
+              )}
+
+              {/* DISPLAY ERROR WHILE FETCHING USER VOTES -------------------- */}
+              {refetchingVotesError && (
+                <div className="flex flex-col items-center">
+                  <AlertTriangleOutline size={24} className="fill-bone-muted/50 mt-6" />
+                  <p className="text-bone-muted font-display my-2">Whoops!</p>
+                  <p className="text-center text-sm text-bone-muted/50">
+                    An error occurred while fetching the votes. Probably the user has no votes.
+                  </p>
+                </div>
               )}
             </DashboardPanel.Content>
           </>
