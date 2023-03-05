@@ -1,13 +1,21 @@
 import React from 'react';
 import DashboardPanel from "~/components/dashboard/DashboardPanel";
+import Button from '~/components/UI/Button';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import cn from 'classnames';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Category, Logs, LogType, Participant, User, Votes } from '@prisma/client';
-import { PersonAddOutline, CheckmarkSquareOutline, BarChartOutline, EmailOutline, HashOutline, CloseSquareOutline, PersonDeleteOutline, SmilingFaceOutline } from '@styled-icons/evaicons-outline';
 import { trpc } from '~/utils/trpc';
-import Button from '~/components/UI/Button';
-
+import {
+  PersonAddOutline,
+  CheckmarkSquareOutline,
+  BarChartOutline, EmailOutline,
+  HashOutline,
+  CloseSquareOutline,
+  PersonDeleteOutline,
+  SmilingFaceOutline,
+  AlertTriangleOutline,
+} from '@styled-icons/evaicons-outline';
 
 interface CachedVotes {
   [key: string]: (Votes & {
@@ -16,16 +24,19 @@ interface CachedVotes {
   })[];
 }
 
+type Log = Logs & { invoker: User; };
+
 const ActivityCard = () => {
   const { data, hasNextPage, fetchNextPage, status } = trpc.logs.getActivityLogs.useInfiniteQuery({}, {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 1000 * 30, // 30 seconds
     refetchOnWindowFocus: false,
   });
-  const [expandedLog, setExpandedLog] = React.useState<Logs & { invoker: User; } | null>(null);
+  const [expandedLog, setExpandedLog] = React.useState<Log | null>(null);
   // Check if the invoker of the currently expanded log has already voted to prevent removing unexisting votes
   const { data: hasInvokerVoted, refetch: refetchHasUserVoted } = trpc.votes.hasVotes.useQuery({ userId: expandedLog?.invokerId! });
   const votesRemove = trpc.votes.removeVotes.useMutation();
+  const userRemove = trpc.auth.deleteUser.useMutation();
   // We cache the votes so we don't have to refetch them when the user clicks on the same user again
   const [cachedVotes, setCachedVotes] = React.useState<CachedVotes>({});
   const { isRefetching: isRefetchingVotes, error: refetchingVotesError } = trpc.votes.getVotes.useQuery({ userId: expandedLog?.invokerId! }, {
@@ -48,12 +59,14 @@ const ActivityCard = () => {
     },
   });
 
-  const getLogTypeStr = (type: LogType) => {
-    switch (type) {
+  const getLogTypeStr = (log: Log) => {
+    switch (log.type) {
       case 'VOTE':
         return 'voted';
       case 'REGISTER':
         return 'registered';
+      case 'USER_DELETE':
+        return `removed @${log.subject}`;
     }
   };
 
@@ -63,6 +76,22 @@ const ActivityCard = () => {
 
     await votesRemove.mutateAsync({ userId: expandedLog.invokerId });
     refetchHasUserVoted();
+  };
+
+  /** Removes the expanded log invoker */
+  const removeUser = async () => {
+    if (!expandedLog?.invokerId) return;
+
+    setExpandedLog(null);
+    userRemove.mutate({ userId: expandedLog.invokerId });
+  };
+
+  /** It opens the side view of the card */
+  const expandLog = (log: Log) => {
+    // These logs don't contain a lot of information, so we don't need to expand them
+    if (["USER_DELETE"].includes(log.type)) return;
+
+    setExpandedLog(log);
   };
 
   /** Returns the side view content based on the log type */
@@ -167,13 +196,39 @@ const ActivityCard = () => {
                     </AlertDialog.Content>
                   </AlertDialog.Portal>
                 </AlertDialog.Root>
-
-                <button
-                  className="w-8 h-8 flex items-center justify-center neon-shadow--purple border border-neon-purple text-neon-purple rounded-xl hover:opacity-80"
-                  title="Delete User"
-                >
-                  <PersonDeleteOutline size={16} />
-                </button>
+                <AlertDialog.Root>
+                  <AlertDialog.Trigger asChild>
+                    <button
+                      className="w-8 h-8 flex items-center justify-center neon-shadow--purple border border-neon-purple text-neon-purple rounded-xl hover:opacity-80"
+                      title="Delete User"
+                    >
+                      <PersonDeleteOutline size={16} />
+                    </button>
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Portal>
+                    <AlertDialog.Overlay className="bg-void/70 inset-0 fixed z-50" />
+                    <AlertDialog.Content className="bg-void-high/30 border border-linear/10 backdrop-blur rounded-xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-[450px] max-h-[85vh] p-6 focus:outline-none z-50">
+                      <AlertDialog.Title className="m-0 text-white font-medium font-display text-xl mb-2">Remove User</AlertDialog.Title>
+                      <AlertDialog.Description className="text-bone-muted mb-8 leading-6 text-sm">
+                        This action cannot be undone, this will remove the user entirely from our servers.
+                      </AlertDialog.Description>
+                      <div className="flex space-x-2.5">
+                        <AlertDialog.Cancel asChild>
+                          <Button outlined variant="tertiary">Cancel</Button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action asChild>
+                          <Button
+                            outlined
+                            className="!border-neon-purple !text-neon-purple"
+                            onClick={removeUser}
+                          >
+                            Remove
+                          </Button>
+                        </AlertDialog.Action>
+                      </div>
+                    </AlertDialog.Content>
+                  </AlertDialog.Portal>
+                </AlertDialog.Root>
               </div>
             </div>
           </>
@@ -215,7 +270,7 @@ const ActivityCard = () => {
                       <p className="text-bone flex space-x-1">
                         <span>{log.invoker.name || log.invoker.email?.split('@')[0]}</span>
                         <span className="text-bone-muted opacity-50">has recently</span>
-                        <span className="text-[#FF8DFA] cursor-pointer hover:underline" onClick={() => setExpandedLog(log)}>{getLogTypeStr(log.type)}</span>
+                        <span className="text-[#FF8DFA] cursor-pointer hover:underline" onClick={() => expandLog(log)}>{getLogTypeStr(log)}</span>
                       </p>
                     </li>
                   );

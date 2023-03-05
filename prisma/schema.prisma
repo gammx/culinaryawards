@@ -107,6 +107,7 @@ model Votes {
 enum LogType {
   REGISTER
   VOTE
+  USER_DELETE
 }
 
 model Logs {
@@ -114,6 +115,7 @@ model Logs {
   type      LogType
   invokerId String   @db.ObjectId
   invoker   User     @relation(fields: [invokerId], references: [id])
+  subject   String?
   createdAt DateTime @default(now())
 
   @@map("logs")
