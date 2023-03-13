@@ -1,9 +1,8 @@
-import { sendVotesSchema } from "~/utils/schemas/votes";
-import { router, adminProcedure, publicProcedure } from "../trpc";
-import { z } from "zod";
+import { getVotesSchema, sendVotesSchema } from "~/utils/schemas/votes";
+import { router, adminProcedure, publicProcedure, protectedProcedure } from "../trpc";
 
 export const votesRouter = router({
-	sendVotes: publicProcedure
+	sendVotes: protectedProcedure
 		.input(sendVotesSchema)
 		.mutation(async ({ ctx, input }) => {
 			const { votes } = input;
@@ -23,11 +22,17 @@ export const votesRouter = router({
 				await ctx.prisma.votes.createMany({
 					data: votesWithUserId,
 				});
+
+				// Generate activity log
+				await ctx.prisma.logs.create({ data: {
+					type: "VOTE",
+					invokerId: userId
+				} });
 	
 				return true;
 			}
 		}),
-	getMyVotes: publicProcedure
+	getMyVotes: protectedProcedure
 		.query(async ({ ctx }) => {
 			if (ctx.session?.user) {
 				const userId = ctx.session.user.id;
@@ -38,7 +43,27 @@ export const votesRouter = router({
 				throw new Error("You're not logged in");
 			}
 		}),
-	hasAlreadyVoted: publicProcedure
+	getVotes: adminProcedure
+		.input(getVotesSchema)
+		.query(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.findMany({ where: { userId }, include: { category: true, participant: true } });
+
+			if (votes.length === 0) {
+				throw new Error("VOTES_NOT_FOUND");
+			}
+			
+			return votes;
+		}),
+	removeVotes: adminProcedure
+		.input(getVotesSchema)
+		.mutation(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.deleteMany({ where: { userId } });
+			
+			return votes;
+		}),
+	hasAlreadyVoted: protectedProcedure
 		.query(async ({ ctx }) => {
 			if (ctx.session?.user) {
 				const userId = ctx.session.user.id;
@@ -48,5 +73,13 @@ export const votesRouter = router({
 			} else {
 				throw new Error("You're not logged in");
 			}
+		}),
+	hasVotes: adminProcedure
+		.input(getVotesSchema)
+		.query(async ({ ctx, input }) => {
+			const { userId } = input;
+			const votes = await ctx.prisma.votes.findFirst({ where: { userId } });
+			
+			return !!votes;
 		}),
 });

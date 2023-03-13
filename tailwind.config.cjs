@@ -27,7 +27,12 @@ module.exports = {
         'bone-muted': '#C5D7E2',
         'linear': '#212931',
         'ink-dark': '#38454E',
-        'ink': '#C5D7E2'
+        'ink': '#C5D7E2',
+
+        'neon-blue': '#70CBFF',
+        'neon-yellow': '#FFBD70',
+        'neon-pink': '#FF70C6',
+        'neon-purple': '#B18CFF',
       },
       gridTemplateColumns: {
         'votation': 'repeat(3, minmax(0, 300px))',
