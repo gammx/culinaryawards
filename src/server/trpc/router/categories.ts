@@ -93,4 +93,16 @@ export const categoryRouter = router({
 				}
 			});
 		}),
+	filterByName: adminProcedure
+		.input(z.object({ name: z.string() }))
+		.query(async ({ ctx, input }) => {
+			return await ctx.prisma.category.findMany({
+				where: {
+					name: {
+						contains: input.name.trim(),
+						mode: "insensitive",
+					}
+				}
+			});
+		}),
 });

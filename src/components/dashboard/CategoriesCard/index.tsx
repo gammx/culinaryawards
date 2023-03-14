@@ -9,7 +9,8 @@ import type { Option } from '~/utils/select';
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
-import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline } from '@styled-icons/evaicons-outline';
+import { useDebounce } from '~/hooks/useDebounce';
 
 const Categories = () => {
   const views = useViews('list');
@@ -33,7 +34,9 @@ const Categories = () => {
   const { validate, errors, setErrors } = useZod(categoryCreateSchema);
   const categoryEditZod = useZod(categoryEditSchema);
   const utils = trpc.useContext();
-  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
+  const [categoryNameFilter, setCategoryNameFilter] = useState('');
+  const debouncedCategoryNameFilter = useDebounce(categoryNameFilter, 500);
+  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.filterByName.useQuery({ name: debouncedCategoryNameFilter }, {
     onSuccess(data) {
       // Sync the category profile with the fetched data
       if (data && categoryProfile) {
@@ -206,9 +209,15 @@ const Categories = () => {
             <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
             <DashboardPanel.IconButton icon={FunnelOutline} />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Input outlined type="text" placeholder="Search" value={categoryNameFilter} onChange={e => setCategoryNameFilter(e.target.value)} />
           <DashboardPanel.Content>
             <ul className="flex flex-col space-y-1 text-bone-muted">
+              {isCategoriesLoading && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-bone-muted/50">
+                  <SearchOutline size={20} />
+                  <p>Searching</p>
+                </li>
+              )}
               {categories && categories.length > 0 && categories.map((category) => (
                 <li
                   key={category.id}
