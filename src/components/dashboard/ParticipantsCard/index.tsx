@@ -1,7 +1,8 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline } from '@styled-icons/evaicons-outline';
+import { useDebounce } from '~/hooks/useDebounce';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
 import Select from 'react-select';
@@ -18,14 +19,19 @@ interface Option {
 const ParticipantsCard = () => {
   const views = useViews('list');
   const utils = trpc.useContext();
-  const { data: participants, refetch: refetchParticipants } = trpc.participants.getAllParticipants.useQuery(undefined, {
-    onSuccess(data) {
-      if (data && participantTarget) {
-        const target = data.find((participant) => participant.id === participantTarget.id);
-        target && setParticipantTarget(target);
+  const [participantNameFilter, setParticipantNameFilter] = useState("");
+  const debouncedParticipantNameFilter = useDebounce(participantNameFilter, 500);
+  const { data: participants, refetch: refetchParticipants, isLoading: isParticipantsLoading } = trpc.participants.filterByName.useQuery(
+    { name: debouncedParticipantNameFilter },
+    {
+      onSuccess(data) {
+        if (data && participantTarget) {
+          const target = data.find((participant) => participant.id === participantTarget.id);
+          target && setParticipantTarget(target);
+        }
       }
-    },
-  });
+    }
+  );
   const { validate, errors, setErrors } = useZod(participantCreateSchema);
   // These are the award categories displayed as options in the participant forms
   const [categoriesAsOptions, setCategoriesAsOptions] = useState<Option[]>([]);
@@ -207,11 +213,17 @@ const ParticipantsCard = () => {
             <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
             <DashboardPanel.IconButton icon={FunnelOutline} />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Input outlined type="text" placeholder="Search" value={participantNameFilter} onChange={e => setParticipantNameFilter(e.target.value)} />
           <DashboardPanel.Content>
             <ul
               className="flex flex-col space-y-1 text-bone-muted"
             >
+              {isParticipantsLoading && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-bone-muted/50">
+                  <SearchOutline size={20} />
+                  <p>Searching</p>
+                </li>
+              )}
               {participants && participants.length > 0 &&
                 participants.map((participant) => (
                   <li
