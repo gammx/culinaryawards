@@ -16,3 +16,16 @@ export const participantCreateSchema = z.object({
 export const participantEditSchema = participantCreateSchema.extend({
 	id: z.string(),
 });
+
+const orderByValues = ["VOTES", ""] as const;
+const orderByTypes = ["ASC", "DESC", ""] as const;
+
+export const filterSchema = z.object({
+	name: z.string().nullable(),
+	orderBy: z.enum(orderByValues).nullable(),
+	orderType: z.enum(orderByTypes).nullable(),
+});
+
+export const participantFilterSchema = filterSchema.extend({
+	category: z.string().nullable(),
+});

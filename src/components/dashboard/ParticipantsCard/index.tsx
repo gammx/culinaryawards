@@ -1,7 +1,7 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline, SearchOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline, TrendingDownOutline, TrendingUpOutline, PricetagsOutline } from '@styled-icons/evaicons-outline';
 import { useDebounce } from '~/hooks/useDebounce';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
@@ -10,6 +10,7 @@ import useZod from '~/hooks/useZod';
 import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
 import DashboardPanel from '../DashboardPanel';
+import cn from 'classnames';
 
 interface Option {
   label: string;
@@ -19,10 +20,16 @@ interface Option {
 const ParticipantsCard = () => {
   const views = useViews('list');
   const utils = trpc.useContext();
-  const [participantNameFilter, setParticipantNameFilter] = useState("");
-  const debouncedParticipantNameFilter = useDebounce(participantNameFilter, 500);
-  const { data: participants, refetch: refetchParticipants, isLoading: isParticipantsLoading } = trpc.participants.filterByName.useQuery(
-    { name: debouncedParticipantNameFilter },
+  const [isFilterAreaVisible, setIsFilterAreaVisible] = useState(false);
+  const [participantFilters, setParticipantFilters] = useState({
+    name: '',
+    category: '',
+    orderBy: '' as 'VOTES' | null,
+    orderType: '' as 'ASC' | 'DESC' | null,
+  });
+  const debouncedParticipantNameFilter = useDebounce(participantFilters.name, 500);
+  const { data: participants, refetch: refetchParticipants, isLoading: isParticipantsLoading } = trpc.participants.filter.useQuery(
+    { ...participantFilters, name: debouncedParticipantNameFilter },
     {
       onSuccess(data) {
         if (data && participantTarget) {
@@ -205,15 +212,62 @@ const ParticipantsCard = () => {
     clearCreatable();
   };
 
+  const orderByVotes = (orderType: 'ASC' | 'DESC') => {
+    if (participantFilters.orderType === orderType) {
+      setParticipantFilters((prev) => ({ ...prev, orderBy: null, orderType: null }));
+      return;
+    }
+    setParticipantFilters((prev) => ({ ...prev, orderBy: 'VOTES', orderType }));
+  };
+
   return (
     <DashboardPanel.Card>
       {views.current === 'list' && (
         <>
           <DashboardPanel.Titlebar title="Participants">
             <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-            <DashboardPanel.IconButton icon={FunnelOutline} />
+            <DashboardPanel.IconButton icon={FunnelOutline} onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)} />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" value={participantNameFilter} onChange={e => setParticipantNameFilter(e.target.value)} />
+          <DashboardPanel.Input
+            outlined
+            type="text"
+            placeholder="Search"
+            value={participantFilters.name}
+            onChange={e => setParticipantFilters((prev) => ({ ...prev, name: e.target.value }))}
+          />
+          {isFilterAreaVisible && (
+            <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-muted">
+              <p>Filter by</p>
+              <div className="flex space-x-2">
+                <div className="border border-linear-tertiary flex rounded-md">
+                  <div className="px-2.5 py-1">Votes</div>
+                  <div
+                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1 hover:bg-linear-tertiary/30", {
+                      "bg-linear-tertiary": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
+                    })}
+                    role="button"
+                    onClick={() => orderByVotes('ASC')}
+                  >
+                    <TrendingDownOutline size={20} />
+                  </div>
+                  <div
+                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1 hover:bg-linear-tertiary/30", {
+                      "bg-linear-tertiary": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
+                    })}
+                    role="button"
+                    onClick={() => orderByVotes('DESC')}
+                  >
+                    <TrendingUpOutline size={20} />
+                  </div>
+                </div>
+
+                <div className="border border-linear-tertiary flex items-center space-x-2 px-2.5 rounded-md hover:bg-linear-tertiary/30" role="button">
+                  <PricetagsOutline size={18} />
+                  <p>Category</p>
+                </div>
+              </div>
+            </div>
+          )}
           <DashboardPanel.Content>
             <ul
               className="flex flex-col space-y-1 text-bone-muted"
@@ -227,7 +281,7 @@ const ParticipantsCard = () => {
               {participants && participants.length > 0 &&
                 participants.map((participant) => (
                   <li
-                    key={participant.id}
+                    key={participant.name}
                     className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
                     onClick={() => goToProfile(participant)}
                   >

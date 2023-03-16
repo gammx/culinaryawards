@@ -26,7 +26,9 @@ module.exports = {
         'void-high': '#050C10',
         'bone-muted': '#C5D7E2',
         'linear': '#212931',
+        'linear-tertiary': '#0A1419',
         'ink-dark': '#38454E',
+        'ink-muted': '#95B1BA',
         'ink': '#C5D7E2',
 
         'neon-blue': '#70CBFF',

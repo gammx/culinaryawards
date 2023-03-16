@@ -1,7 +1,8 @@
-import { participantCreateSchema, participantEditSchema } from "~/utils/schemas/participants";
+import { participantCreateSchema, participantEditSchema, participantFilterSchema } from "~/utils/schemas/participants";
 import { adminProcedure, router } from "../trpc";
 import { env } from "~/env/server.mjs";
 import { z } from "zod";
+import { Participant } from "@prisma/client";
 const imgBBUploader = require("imgbb-uploader");
 
 export const participantRouter = router({
@@ -125,5 +126,57 @@ export const participantRouter = router({
 					},
 				},
 			});
+		}),
+	filter: adminProcedure
+		.input(participantFilterSchema)
+		.query(async ({ ctx, input }) => {
+			const { name, category, orderBy, orderType } = input;
+
+			if (!orderBy && !orderType) {
+				return await ctx.prisma.participant.findMany({
+					where: {
+						name: {
+							contains: name?.trim(),
+							mode: 'insensitive',
+						},
+						categoryIds: category ? {
+							has: category,
+						} : undefined,
+					},
+				});
+			}
+			const res = await ctx.prisma.participant.aggregateRaw({
+				pipeline: [
+					{
+						$match: {
+							name: {
+								$regex: name?.trim(),
+								$options: 'i',
+							}
+						},
+					},
+					{
+						$lookup: {
+							from: 'votes',
+							localField: '_id',
+							foreignField: 'participantId',
+							as: 'votes',
+						}
+					},
+					{
+						$addFields: {
+							voteCount: {
+								$size: '$votes',
+							},
+						},
+					},
+					{
+						$sort: {
+							voteCount: orderType === 'ASC' ? 1 : -1,
+						}
+					}
+				]
+			})
+			return (res as unknown) as Participant[];
 		}),
 })
