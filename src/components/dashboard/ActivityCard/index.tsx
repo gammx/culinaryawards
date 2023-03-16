@@ -35,7 +35,9 @@ const ActivityCard = () => {
   });
   const [expandedLog, setExpandedLog] = React.useState<Log | null>(null);
   // Check if the invoker of the currently expanded log has already voted to prevent removing unexisting votes
-  const { data: hasInvokerVoted, refetch: refetchHasUserVoted } = trpc.votes.hasVotes.useQuery({ userId: expandedLog?.invokerId! });
+  const { data: hasInvokerVoted, refetch: refetchHasUserVoted } = trpc.votes.hasVotes.useQuery({ userId: expandedLog?.invokerId! }, {
+    enabled: !!expandedLog && expandedLog.type === 'VOTE',
+  });
   const votesRemove = trpc.votes.removeVotes.useMutation();
   const userRemove = trpc.auth.deleteUser.useMutation({
     async onMutate(variables) {
