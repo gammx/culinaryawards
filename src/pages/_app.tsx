@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { trpc } from "../utils/trpc";
 
 import "../styles/globals.css";
+import "../styles/bits/select.scss";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,

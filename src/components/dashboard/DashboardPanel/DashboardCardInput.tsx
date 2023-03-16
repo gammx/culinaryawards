@@ -13,8 +13,8 @@ const DashboardCardInput: React.FC<DashboardCardInputProps> = ({
 	return (
 		<input
 			spellCheck={false}
-			className={cn("bg-transparent rounded-md border border-[#0A1419] outline-[#0A1419] focus:outline focus:outline-offset-2 focus:outline-[#0A1419]/50 w-full h-8 px-5 py-3 text-sm text-[#96B1BA] transition-all duration-150", className, {
-				"bg-[#081116]/30": !outlined,
+			className={cn("bg-transparent rounded-md border border-linear-tertiary outline-linear-tertiary focus:outline focus:outline-offset-2 focus:outline-linear-tertiary/30 w-full h-8 px-5 py-3 text-sm transition-all duration-150 selection:bg-ink selection:text-black placeholder:text-ink-muted text-ink-secondary", className, {
+				"bg-void-high/50": !outlined,
 			})}
 			{...props}
 		/>

@@ -236,14 +236,15 @@ const ParticipantsCard = () => {
             onChange={e => setParticipantFilters((prev) => ({ ...prev, name: e.target.value }))}
           />
           {isFilterAreaVisible && (
-            <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-muted">
+            <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-tertiary">
               <p>Filter by</p>
               <div className="flex space-x-2">
-                <div className="border border-linear-tertiary flex rounded-md">
+                <div className="border border-linear-secondary flex rounded-md text-ink-secondary">
                   <div className="px-2.5 py-1">Votes</div>
                   <div
-                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1 hover:bg-linear-tertiary/30", {
-                      "bg-linear-tertiary": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
+                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
+                      "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'ASC',
+                      "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
                     })}
                     role="button"
                     onClick={() => orderByVotes('ASC')}
@@ -251,8 +252,9 @@ const ParticipantsCard = () => {
                     <TrendingDownOutline size={20} />
                   </div>
                   <div
-                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1 hover:bg-linear-tertiary/30", {
-                      "bg-linear-tertiary": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
+                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
+                      "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'DESC',
+                      "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
                     })}
                     role="button"
                     onClick={() => orderByVotes('DESC')}
@@ -261,7 +263,7 @@ const ParticipantsCard = () => {
                   </div>
                 </div>
 
-                <div className="border border-linear-tertiary flex items-center space-x-2 px-2.5 rounded-md hover:bg-linear-tertiary/30" role="button">
+                <div className="border border-linear-tertiary flex items-center space-x-2 px-2.5 rounded-md text-ink-secondary hover:bg-linear-secondary/20 hover:text-ink" role="button">
                   <PricetagsOutline size={18} />
                   <p>Category</p>
                 </div>
@@ -270,10 +272,10 @@ const ParticipantsCard = () => {
           )}
           <DashboardPanel.Content>
             <ul
-              className="flex flex-col space-y-1 text-bone-muted"
+              className="flex flex-col space-y-1 text-ink-secondary"
             >
               {isParticipantsLoading && (
-                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-bone-muted/50">
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
                   <SearchOutline size={20} />
                   <p>Searching</p>
                 </li>
@@ -282,7 +284,7 @@ const ParticipantsCard = () => {
                 participants.map((participant) => (
                   <li
                     key={participant.name}
-                    className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
+                    className="flex space-x-4 items-center cursor-pointer p-2 rounded-md hover:bg-void-high hover:text-ink"
                     onClick={() => goToProfile(participant)}
                   >
                     <img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
@@ -363,7 +365,8 @@ const ParticipantsCard = () => {
                   isMulti
                   isSearchable
                   menuPlacement={'auto'}
-                  className="react-select-container"
+                  menuPosition={'fixed'}
+                  className="select"
                   classNamePrefix="react-select"
                 />
                 {errors.categoryIds && <span className="text-red text-sm">{errors.categoryIds}</span>}
@@ -390,8 +393,8 @@ const ParticipantsCard = () => {
                 mapsAnchor={participantTarget.mapsAnchor}
               />
               <div className="mt-11">
-                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
-                <ul className="text-sm text-ink mt-5">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-tertiary">Categories</p>
+                <ul className="text-sm text-ink-secondary mt-5">
                   {isCategoriesFetching
                     ? <li>Loading...</li>
                     : (categories && participantTarget.categoryIds.length > 0)
@@ -466,7 +469,7 @@ const ParticipantsCard = () => {
                     isSearchable
                     menuPlacement={'auto'}
                     menuPosition={'fixed'}
-                    className="react-select-container"
+                    className="select"
                     classNamePrefix="react-select"
                   />
                   {errors.categoryIds && <p className="text-xs text-red-500 mt-2">{errors.categoryIds}</p>}
@@ -483,7 +486,7 @@ const ParticipantsCard = () => {
               <form onSubmit={deleteParticipant}>
                 <fieldset className="h-full">
                   <label>Delete Participant</label>
-                  <p className="text-sm text-ink/80">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
+                  <p className="text-sm text-ink">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
                   <br />
                   <Button variant="danger" type="submit">Delete</Button>
                 </fieldset>

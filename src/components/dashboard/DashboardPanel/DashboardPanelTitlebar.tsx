@@ -22,13 +22,13 @@ const DashboardPanelTitlebar: React.FC<DashboardPanelTitlebarProps> = ({
 				{onBack && (
 					<div
 						role="button"
-						className="border border-linear text-ink rounded-lg w-6 h-6 flex items-center justify-center hover:border-ink transition-all duration-100"
+						className="border border-linear-secondary text-ink-secondary rounded-lg w-6 h-6 flex items-center justify-center hover:border-linear hover:text-ink transition-all duration-100"
 						onClick={onBack}
 					>
 						<ArrowBackOutline size={18} />
 					</div>
 				)}
-				<h1 className="font-display text-2xl text-bone">{title}</h1>
+				<h1 className="font-display text-2xl text-ink">{title}</h1>
 			</div>
 			<div className="flex space-x-2">
 				{children}
