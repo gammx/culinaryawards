@@ -1,4 +1,6 @@
-import Select from 'react-select';
+import SelectRaw from 'react-select';
+import ToggleGroup from '~/components/UI/ToggleGroup';
+import Select from '~/components/UI/Select';
 import useZod from '~/hooks/useZod';
 import useViews from '~/utils/useViews';
 import Button from '~/components/UI/Button';
@@ -34,9 +36,13 @@ const Categories = () => {
   const { validate, errors, setErrors } = useZod(categoryCreateSchema);
   const categoryEditZod = useZod(categoryEditSchema);
   const utils = trpc.useContext();
-  const [categoryNameFilter, setCategoryNameFilter] = useState('');
-  const debouncedCategoryNameFilter = useDebounce(categoryNameFilter, 500);
-  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.filterByName.useQuery({ name: debouncedCategoryNameFilter }, {
+  const [isFilterAreaVisible, setIsFilterAreaVisible] = useState(false);
+  const [categoryFilters, setCategoryFilters] = useState({
+    name: '',
+    participant: '',
+  });
+  const debouncedCategoryNameFilter = useDebounce(categoryFilters.name, 500);
+  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.filter.useQuery({ ...categoryFilters, name: debouncedCategoryNameFilter }, {
     onSuccess(data) {
       // Sync the category profile with the fetched data
       if (data && categoryProfile) {
@@ -206,10 +212,38 @@ const Categories = () => {
           <DashboardPanel.Titlebar
             title="Categories"
           >
-            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-            <DashboardPanel.IconButton icon={FunnelOutline} />
+            <DashboardPanel.IconButton
+              icon={PlusOutline}
+              onClick={() => views.go('add')}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Add Category"
+            />
+            <DashboardPanel.IconButton
+              icon={FunnelOutline}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Filter"
+              onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)}
+            />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" value={categoryNameFilter} onChange={e => setCategoryNameFilter(e.target.value)} />
+          <DashboardPanel.Input
+            outlined
+            type="text"
+            placeholder="Search"
+            value={categoryFilters.name}
+            onChange={e => setCategoryFilters(prev => ({ ...prev, name: e.target.value }))}
+          />
+          {isFilterAreaVisible && (
+            <ToggleGroup.Field label="Filter by">
+              <Select.Minimal
+                id="category-filter"
+                isLoading={isParticipantsFetching}
+                options={participantsAsOptions}
+                className="flex-1"
+                placeholder="Participant"
+                onChange={(value) => setCategoryFilters(prev => ({ ...prev, participant: value?.value || '' }))}
+              ></Select.Minimal>
+            </ToggleGroup.Field>
+          )}
           <DashboardPanel.Content>
             <ul className="flex flex-col space-y-1 text-ink-secondary">
               {isCategoriesLoading && (
@@ -227,6 +261,12 @@ const Categories = () => {
                   {category.name}
                 </li>
               ))}
+              {!isCategoriesLoading && categories && categories.length === 0 && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>No categories found</p>
+                </li>
+              )}
             </ul>
           </DashboardPanel.Content>
         </>
@@ -262,7 +302,7 @@ const Categories = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="participantIds">Participants</label>
-                <Select
+                <SelectRaw
                   id="participantIds"
                   isLoading={isCategoriesLoading}
                   options={participantsAsOptions}
@@ -335,7 +375,7 @@ const Categories = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="participantIds">Categories</label>
-                  <Select
+                  <SelectRaw
                     id="participantIds"
                     isLoading={isCategoriesLoading}
                     options={participantsAsOptions}

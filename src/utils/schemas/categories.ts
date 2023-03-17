@@ -11,3 +11,8 @@ export const categoryCreateSchema = z.object({
 export const categoryEditSchema = categoryCreateSchema.extend({
 	id: z.string(),
 });
+
+export const categoryFilterSchema = z.object({
+	name: z.string().nullable(),
+	participant: z.string().nullable(),
+})

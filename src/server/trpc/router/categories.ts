@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { router, adminProcedure, publicProcedure } from "../trpc";
-import { categoryCreateSchema, categoryEditSchema } from "~/utils/schemas/categories";
+import { categoryCreateSchema, categoryEditSchema, categoryFilterSchema } from "~/utils/schemas/categories";
 
 export const categoryRouter = router({
-  getAllCategories: publicProcedure.query(async ({ ctx }) => {
+	getAllCategories: publicProcedure.query(async ({ ctx }) => {
 		return await ctx.prisma.category.findMany();
 	}),
 	getAllCategoriesWithParticipants: publicProcedure.query(async ({ ctx }) => {
@@ -103,6 +103,22 @@ export const categoryRouter = router({
 						mode: "insensitive",
 					}
 				}
+			});
+		}),
+	filter: adminProcedure
+		.input(categoryFilterSchema)
+		.query(async ({ ctx, input }) => {
+			const { name, participant } = input;
+			return await ctx.prisma.category.findMany({
+				where: {
+					name: {
+						contains: name?.trim(),
+						mode: 'insensitive',
+					},
+					participantIds: participant ? {
+						has: participant,
+					} : undefined,
+				},
 			});
 		}),
 });

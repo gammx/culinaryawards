@@ -6,7 +6,6 @@ export const logsRouter = router({
 		.input(getActivityLogsSchema)
 		.query(async ({ ctx, input }) => {
 			const { cursor } = input;
-			console.log("cursor", cursor);
 			const logs = await ctx.prisma.logs.findMany({
 				take: 11,
 				cursor: cursor ? { id: cursor } : undefined,

@@ -13,7 +13,7 @@ const Dashboard = () => {
 
 	return (
 		<main
-			className="w-screen h-screen flex flex-col relative bg-void"
+			className="w-screen h-screen flex flex-col relative bg-void overflow-hidden"
 		>
 			<div className="absolute w-full h-full top-0 left-0 bg-[url('/space_grid.png')] bg-cover bg-center bg-no-repeat"></div>
 			<div className="flex flex-col basis-5/12 shrink-0">

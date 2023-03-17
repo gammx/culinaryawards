@@ -1,16 +1,17 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline, SearchOutline, TrendingDownOutline, TrendingUpOutline, PricetagsOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline, TrendingDownOutline, TrendingUpOutline } from '@styled-icons/evaicons-outline';
 import { useDebounce } from '~/hooks/useDebounce';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
-import Select from 'react-select';
+import SelectRaw from 'react-select';
+import ToggleGroup from '~/components/UI/ToggleGroup';
+import Select from '~/components/UI/Select';
 import useZod from '~/hooks/useZod';
 import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
 import DashboardPanel from '../DashboardPanel';
-import cn from 'classnames';
 
 interface Option {
   label: string;
@@ -247,57 +248,31 @@ const ParticipantsCard = () => {
             onChange={e => setParticipantFilters((prev) => ({ ...prev, name: e.target.value }))}
           />
           {isFilterAreaVisible && (
-            <>
-              <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-tertiary">
-                <p>Filter by</p>
-                <div className="flex flex-1 space-x-2">
-                  <div className="border border-linear-secondary flex rounded-md text-ink-secondary">
-                    <div className="px-2.5 py-1">Votes</div>
-                    <div
-                      className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
-                        "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'ASC',
-                        "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
-                      })}
-                      role="button"
-                      data-tooltip-id="dashboard-ttip"
-                      data-tooltip-content="Least Voted"
-                      onClick={() => orderByVotes('ASC')}
-                    >
-                      <TrendingDownOutline size={20} />
-                    </div>
-                    <div
-                      className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
-                        "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'DESC',
-                        "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
-                      })}
-                      role="button"
-                      data-tooltip-id="dashboard-ttip"
-                      data-tooltip-content="Most Voted"
-                      onClick={() => orderByVotes('DESC')}
-                    >
-                      <TrendingUpOutline size={20} />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 w-full">
-                    <Select
-                      id="categories"
-                      isLoading={isCategoriesLoading}
-                      options={categoriesAsOptions}
-                      defaultValue={defaultOptions}
-                      isSearchable
-                      isClearable={true}
-                      menuPlacement={'auto'}
-                      menuPosition={'fixed'}
-                      className="select--outlined select--minimal select select--small"
-                      classNamePrefix="react-select"
-                      placeholder="Category"
-                      onChange={(value) => setParticipantFilters(prev => ({ ...prev, category: value?.value || '' }))}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
+            <ToggleGroup.Field label="Filter by">
+              <ToggleGroup.Root label="Votes">
+                <ToggleGroup.Item
+                  tooltip="Least Voted"
+                  icon={TrendingDownOutline}
+                  isActive={participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC'}
+                  onClick={() => orderByVotes('ASC')}
+                />
+                <ToggleGroup.Item
+                  tooltip="Most Voted"
+                  icon={TrendingUpOutline}
+                  isActive={participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC'}
+                  onClick={() => orderByVotes('DESC')}
+                />
+              </ToggleGroup.Root>
+              <Select.Minimal
+                id="categories"
+                isLoading={isCategoriesLoading}
+                options={categoriesAsOptions}
+                defaultValue={defaultOptions}
+                onChange={(value) => setParticipantFilters(prev => ({ ...prev, category: value?.value || '' }))}
+                className="flex-1"
+                placeholder="Category"
+              ></Select.Minimal>
+            </ToggleGroup.Field>
           )}
           <DashboardPanel.Content>
             <ul
@@ -321,6 +296,12 @@ const ParticipantsCard = () => {
                   </li>
                 ))
               }
+              {!isParticipantsLoading && participants && participants.length === 0 && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>No participants found</p>
+                </li>
+              )}
             </ul>
           </DashboardPanel.Content>
         </>
@@ -386,7 +367,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="categories">Categories</label>
-                <Select
+                <SelectRaw
                   id="categories"
                   isLoading={isCategoriesLoading}
                   options={categoriesAsOptions}
@@ -488,7 +469,7 @@ const ParticipantsCard = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="categories">Categories</label>
-                  <Select
+                  <SelectRaw
                     id="categories"
                     isLoading={isCategoriesLoading}
                     options={categoriesAsOptions}

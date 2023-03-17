@@ -183,7 +183,6 @@ export const participantRouter = router({
 					}
 				]
 			});
-			console.log(res);
 			return (res as unknown) as Participant[];
 		}),
 });
