@@ -189,14 +189,16 @@ const ActivityCard = () => {
               <div className="flex space-x-2.5">
                 <a
                   className="w-8 h-8 flex items-center justify-center neon-shadow--blue border border-pastel-blue text-pastel-blue rounded-xl hover:opacity-80"
-                  title={`Contact ${expandedLog.invoker.email}`}
+                  data-tooltip-id="dashboard-ttip"
+                  data-tooltip-content="Contact"
                   href={`mailto:${expandedLog.invoker.email}`}
                 >
                   <EmailOutline size={16} />
                 </a>
                 <button
                   className="w-8 h-8 flex items-center justify-center neon-shadow--yellow border border-pastel-yellow text-pastel-yellow rounded-xl hover:opacity-80"
-                  title="Copy ID"
+                  data-tooltip-id="dashboard-ttip"
+                  data-tooltip-content="Copy ID"
                   onClick={() => navigator.clipboard.writeText(expandedLog.invoker.id)}
                 >
                   <HashOutline size={16} />
@@ -207,7 +209,8 @@ const ActivityCard = () => {
                       className={cn("w-8 h-8 flex items-center justify-center neon-shadow--pink border border-pastel-pink text-pastel-pink rounded-xl hover:opacity-80", {
                         'opacity-30 pointer-events-none': !hasInvokerVoted,
                       })}
-                      title="Remove User Votes"
+                      data-tooltip-id="dashboard-ttip"
+                      data-tooltip-content="Remove Votes"
                     >
                       <CloseSquareOutline size={16} />
                     </button>
@@ -234,7 +237,8 @@ const ActivityCard = () => {
                   <AlertDialog.Trigger asChild>
                     <button
                       className="w-8 h-8 flex items-center justify-center neon-shadow--purple border border-pastel-purple text-pastel-purple rounded-xl hover:opacity-80"
-                      title="Delete User"
+                      data-tooltip-id="dashboard-ttip"
+                      data-tooltip-content="Delete User"
                     >
                       <PersonDeleteOutline size={16} />
                     </button>

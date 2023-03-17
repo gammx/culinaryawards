@@ -23,8 +23,16 @@ const DashboardCardProfile: React.FC<DashboardCardProfileProps> = ({
 			{/* ------------ PARTICIPANT LINKS ------------ */}
 			<div>
 				<div className="py-3 px-2.5 border border-linear-tertiary flex flex-col rounded-2xl space-y-2.5 text-ink-secondary">
-					{mapsAnchor && <a href={mapsAnchor} target="_blank" className="flex"><PinOutline size={18} className="cursor-pointer hover:fill-pastel-pink" /></a>}
-					{siteAnchor && <a href={siteAnchor} target="_blank" className="flex"><Link2Outline size={18} className="cursor-pointer hover:fill-pastel-yellow" /></a>}
+					{mapsAnchor && (
+						<a href={mapsAnchor} target="_blank" className="flex" data-tooltip-id="dashboard-ttip" data-tooltip-content="Visit Location" data-tooltip-place="right">
+							<PinOutline size={18} className="cursor-pointer hover:fill-pastel-pink" />
+						</a>
+					)}
+					{siteAnchor && (
+						<a href={siteAnchor} target="_blank" className="flex" data-tooltip-id="dashboard-ttip" data-tooltip-content="Visit Website" data-tooltip-place="right">
+							<Link2Outline size={18} className="cursor-pointer hover:fill-pastel-yellow" />
+						</a>
+					)}
 				</div>
 			</div>
 

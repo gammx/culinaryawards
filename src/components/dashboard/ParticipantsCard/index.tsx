@@ -226,8 +226,18 @@ const ParticipantsCard = () => {
       {views.current === 'list' && (
         <>
           <DashboardPanel.Titlebar title="Participants">
-            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-            <DashboardPanel.IconButton icon={FunnelOutline} onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)} />
+            <DashboardPanel.IconButton
+              icon={PlusOutline}
+              onClick={() => views.go('add')}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Add Participant"
+            />
+            <DashboardPanel.IconButton
+              icon={FunnelOutline}
+              onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Filter"
+            />
           </DashboardPanel.Titlebar>
           <DashboardPanel.Input
             outlined
@@ -249,6 +259,8 @@ const ParticipantsCard = () => {
                         "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
                       })}
                       role="button"
+                      data-tooltip-id="dashboard-ttip"
+                      data-tooltip-content="Least Voted"
                       onClick={() => orderByVotes('ASC')}
                     >
                       <TrendingDownOutline size={20} />
@@ -259,6 +271,8 @@ const ParticipantsCard = () => {
                         "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
                       })}
                       role="button"
+                      data-tooltip-id="dashboard-ttip"
+                      data-tooltip-content="Most Voted"
                       onClick={() => orderByVotes('DESC')}
                     >
                       <TrendingUpOutline size={20} />

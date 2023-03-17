@@ -5,6 +5,7 @@ import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard';
 import CategoriesCard from '~/components/dashboard/CategoriesCard';
 import ActivityCard from '~/components/dashboard/ActivityCard';
+import { Tooltip } from 'react-tooltip';
 
 const Dashboard = () => {
 	const { data } = useSession();
@@ -30,6 +31,11 @@ const Dashboard = () => {
 					<CategoriesCard />
 				</DashboardPanel.Root>
 			</div>
+			<Tooltip
+				id="dashboard-ttip"
+				place="top"
+				className="!bg-ink-secondary !text-black !opacity-100 !z-50 !rounded-sm !px-2 !py-1 !leading-none !text-sm"
+			></Tooltip>
 		</main>
 	);
 };
