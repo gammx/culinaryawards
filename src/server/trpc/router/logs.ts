@@ -29,4 +29,36 @@ export const logsRouter = router({
 				nextCursor,
 			};
 		}),
+		getUserCount: adminProcedure
+			.query(async ({ ctx }) => {
+				return await ctx.prisma.user.count();
+			}),
+		getTodayUserCount: adminProcedure
+			.query(async ({ ctx }) => {
+				return await ctx.prisma.logs.count({
+					where: {
+						createdAt: {
+							gte: new Date(new Date().setHours(0, 0, 0, 0)),
+						},
+						type: "REGISTER",
+					},
+				});
+			}),
+		getVoteCount: adminProcedure
+			.query(async ({ ctx }) => {
+				return await ctx.prisma.logs.count({
+					where: { type: "VOTE" }
+				});
+			}),
+		getTodayVoteCount: adminProcedure
+			.query(async ({ ctx }) => {
+				return await ctx.prisma.logs.count({
+					where: {
+						createdAt: {
+							gte: new Date(new Date().setHours(0, 0, 0, 0)),
+						},
+						type: "VOTE",
+					},
+				});
+			}),
 });

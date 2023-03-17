@@ -28,6 +28,18 @@ type Log = Logs & { invoker: User; };
 
 const ActivityCard = () => {
   const utils = trpc.useContext();
+  const { data: userCount } = trpc.logs.getUserCount.useQuery(undefined, {
+    refetchInterval: 1000 * 60 * 5, // 5 minutes
+  });
+  const { data: todayUserCount } = trpc.logs.getTodayUserCount.useQuery(undefined, {
+    refetchInterval: 1000 * 60 * 3, // 3 minutes
+  });
+  const { data: voteCount } = trpc.logs.getVoteCount.useQuery(undefined, {
+    refetchInterval: 1000 * 60 * 5, // 5 minutes
+  });
+  const { data: todayVoteCount } = trpc.logs.getTodayVoteCount.useQuery(undefined, {
+    refetchInterval: 1000 * 60 * 3, // 3 minutes
+  });
   const { data: activityLogs, hasNextPage, fetchNextPage, status } = trpc.logs.getActivityLogs.useInfiniteQuery({}, {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 1000 * 30, // 30 seconds
@@ -310,22 +322,22 @@ const ActivityCard = () => {
       })}>
         {!!expandedLog ? getExpandedLogView() : (
           <div className="flex flex-col space-y-9">
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center space-x-4">
               <div className="dashboard-icon-card w-9 h-9 rounded-xl flex items-center justify-center border border-linear-tertiary">
                 <PersonAddOutline size={16} className="fill-ink-secondary" />
               </div>
               <div>
-                <h1 className="font-display text-[13px] text-ink mb-1">12,200 users</h1>
-                <p className="font-light text-xs text-pastel-green">+645 new today</p>
+                <h1 className="font-display text-[13px] text-ink mb-1">{userCount || 0} {!userCount || userCount > 1 ? 'users' : 'user'}</h1>
+                <p className="font-light text-xs text-pastel-green">+{todayUserCount || 0} new today</p>
               </div>
             </div>
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center space-x-4">
               <div className="dashboard-icon-card w-9 h-9 rounded-xl flex items-center justify-center border border-linear-tertiary">
                 <CheckmarkSquareOutline size={16} className="fill-ink-secondary" />
               </div>
               <div>
-                <h1 className="font-display text-[13px] text-ink mb-1">12,200 votes</h1>
-                <p className="font-light text-xs text-pastel-green">+64 new today</p>
+                <h1 className="font-display text-[13px] text-ink mb-1">{voteCount || 0} {!voteCount || voteCount > 1 ? 'votes' : 'vote'}</h1>
+                <p className="font-light text-xs text-pastel-green">+{todayVoteCount || 0} new today</p>
               </div>
             </div>
           </div>
