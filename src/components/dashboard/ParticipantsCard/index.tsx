@@ -212,6 +212,7 @@ const ParticipantsCard = () => {
     clearCreatable();
   };
 
+  /** It sorts the participants by vote count in ascending/descending order */
   const orderByVotes = (orderType: 'ASC' | 'DESC') => {
     if (participantFilters.orderType === orderType) {
       setParticipantFilters((prev) => ({ ...prev, orderBy: null, orderType: null }));
@@ -236,39 +237,53 @@ const ParticipantsCard = () => {
             onChange={e => setParticipantFilters((prev) => ({ ...prev, name: e.target.value }))}
           />
           {isFilterAreaVisible && (
-            <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-tertiary">
-              <p>Filter by</p>
-              <div className="flex space-x-2">
-                <div className="border border-linear-secondary flex rounded-md text-ink-secondary">
-                  <div className="px-2.5 py-1">Votes</div>
-                  <div
-                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
-                      "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'ASC',
-                      "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
-                    })}
-                    role="button"
-                    onClick={() => orderByVotes('ASC')}
-                  >
-                    <TrendingDownOutline size={20} />
+            <>
+              <div className="mt-2.5 flex space-x-3 items-center text-sm text-ink-tertiary">
+                <p>Filter by</p>
+                <div className="flex flex-1 space-x-2">
+                  <div className="border border-linear-secondary flex rounded-md text-ink-secondary">
+                    <div className="px-2.5 py-1">Votes</div>
+                    <div
+                      className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
+                        "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'ASC',
+                        "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC',
+                      })}
+                      role="button"
+                      onClick={() => orderByVotes('ASC')}
+                    >
+                      <TrendingDownOutline size={20} />
+                    </div>
+                    <div
+                      className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
+                        "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'DESC',
+                        "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
+                      })}
+                      role="button"
+                      onClick={() => orderByVotes('DESC')}
+                    >
+                      <TrendingUpOutline size={20} />
+                    </div>
                   </div>
-                  <div
-                    className={cn("border-l border-linear-tertiary flex items-center justify-center px-1", {
-                      "hover:bg-linear-secondary/20 hover:text-ink": participantFilters.orderType !== 'DESC',
-                      "bg-linear-tertiary text-ink": participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC',
-                    })}
-                    role="button"
-                    onClick={() => orderByVotes('DESC')}
-                  >
-                    <TrendingUpOutline size={20} />
-                  </div>
-                </div>
 
-                <div className="border border-linear-tertiary flex items-center space-x-2 px-2.5 rounded-md text-ink-secondary hover:bg-linear-secondary/20 hover:text-ink" role="button">
-                  <PricetagsOutline size={18} />
-                  <p>Category</p>
+                  <div className="flex-1 w-full">
+                    <Select
+                      id="categories"
+                      isLoading={isCategoriesLoading}
+                      options={categoriesAsOptions}
+                      defaultValue={defaultOptions}
+                      isSearchable
+                      isClearable={true}
+                      menuPlacement={'auto'}
+                      menuPosition={'fixed'}
+                      className="select--outlined select--minimal select select--small"
+                      classNamePrefix="react-select"
+                      placeholder="Category"
+                      onChange={(value) => setParticipantFilters(prev => ({ ...prev, category: value?.value || '' }))}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
           <DashboardPanel.Content>
             <ul

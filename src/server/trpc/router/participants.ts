@@ -149,12 +149,18 @@ export const participantRouter = router({
 				pipeline: [
 					{
 						$match: {
+							// Filter by name
 							name: {
 								$regex: name?.trim(),
 								$options: 'i',
-							}
-						},
+							},
+							// Filter by category, we use undefined to fetch all instead
+							categoryIds: category ? {
+								$oid: category,
+							} : undefined,
+						}
 					},
+					// Filter by vote count
 					{
 						$lookup: {
 							from: 'votes',
@@ -176,7 +182,8 @@ export const participantRouter = router({
 						}
 					}
 				]
-			})
+			});
+			console.log(res);
 			return (res as unknown) as Participant[];
 		}),
-})
+});
