@@ -6,7 +6,7 @@ const DashboardPanelCard: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
 	...props
 }) => {
 	return (
-		<div className={cn("w-full h-full pt-11 px-9 pb-9 rounded-[30px] border border-linear/30 flex flex-col dashboard-card-bg", className)} {...props} />
+		<div className={cn("w-full h-full pt-11 px-9 pb-9 rounded-[30px] border border-linear flex flex-col bg-void/50", className)} {...props} />
 	);
 };
 

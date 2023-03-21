@@ -1,10 +1,13 @@
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { participantCreateSchema } from '~/utils/schemas/participants';
 import { Participant } from '@prisma/client';
-import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline, TrendingDownOutline, TrendingUpOutline } from '@styled-icons/evaicons-outline';
+import { useDebounce } from '~/hooks/useDebounce';
 import { trpc } from '~/utils/trpc';
 import Button from '~/components/UI/Button';
-import Select from 'react-select';
+import SelectRaw from 'react-select';
+import ToggleGroup from '~/components/UI/ToggleGroup';
+import Select from '~/components/UI/Select';
 import useZod from '~/hooks/useZod';
 import useUploadImage from '~/utils/useUploadImage';
 import useViews from '~/utils/useViews';
@@ -18,14 +21,25 @@ interface Option {
 const ParticipantsCard = () => {
   const views = useViews('list');
   const utils = trpc.useContext();
-  const { data: participants, refetch: refetchParticipants } = trpc.participants.getAllParticipants.useQuery(undefined, {
-    onSuccess(data) {
-      if (data && participantTarget) {
-        const target = data.find((participant) => participant.id === participantTarget.id);
-        target && setParticipantTarget(target);
-      }
-    },
+  const [isFilterAreaVisible, setIsFilterAreaVisible] = useState(false);
+  const [participantFilters, setParticipantFilters] = useState({
+    name: '',
+    category: '',
+    orderBy: '' as 'VOTES' | null,
+    orderType: '' as 'ASC' | 'DESC' | null,
   });
+  const debouncedParticipantNameFilter = useDebounce(participantFilters.name, 500);
+  const { data: participants, refetch: refetchParticipants, isLoading: isParticipantsLoading } = trpc.participants.filter.useQuery(
+    { ...participantFilters, name: debouncedParticipantNameFilter },
+    {
+      onSuccess(data) {
+        if (data && participantTarget) {
+          const target = data.find((participant) => participant.id === participantTarget.id);
+          target && setParticipantTarget(target);
+        }
+      }
+    }
+  );
   const { validate, errors, setErrors } = useZod(participantCreateSchema);
   // These are the award categories displayed as options in the participant forms
   const [categoriesAsOptions, setCategoriesAsOptions] = useState<Option[]>([]);
@@ -199,24 +213,82 @@ const ParticipantsCard = () => {
     clearCreatable();
   };
 
+  /** It sorts the participants by vote count in ascending/descending order */
+  const orderByVotes = (orderType: 'ASC' | 'DESC') => {
+    if (participantFilters.orderType === orderType) {
+      setParticipantFilters((prev) => ({ ...prev, orderBy: null, orderType: null }));
+      return;
+    }
+    setParticipantFilters((prev) => ({ ...prev, orderBy: 'VOTES', orderType }));
+  };
+
   return (
     <DashboardPanel.Card>
       {views.current === 'list' && (
         <>
           <DashboardPanel.Titlebar title="Participants">
-            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-            <DashboardPanel.IconButton icon={FunnelOutline} />
+            <DashboardPanel.IconButton
+              icon={PlusOutline}
+              onClick={() => views.go('add')}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Add Participant"
+            />
+            <DashboardPanel.IconButton
+              icon={FunnelOutline}
+              onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Filter"
+            />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Input
+            outlined
+            type="text"
+            placeholder="Search"
+            value={participantFilters.name}
+            onChange={e => setParticipantFilters((prev) => ({ ...prev, name: e.target.value }))}
+          />
+          {isFilterAreaVisible && (
+            <ToggleGroup.Field label="Filter by">
+              <ToggleGroup.Root label="Votes">
+                <ToggleGroup.Item
+                  tooltip="Least Voted"
+                  icon={TrendingDownOutline}
+                  isActive={participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'ASC'}
+                  onClick={() => orderByVotes('ASC')}
+                />
+                <ToggleGroup.Item
+                  tooltip="Most Voted"
+                  icon={TrendingUpOutline}
+                  isActive={participantFilters.orderBy === 'VOTES' && participantFilters.orderType === 'DESC'}
+                  onClick={() => orderByVotes('DESC')}
+                />
+              </ToggleGroup.Root>
+              <Select.Minimal
+                id="categories"
+                isLoading={isCategoriesLoading}
+                options={categoriesAsOptions}
+                defaultValue={defaultOptions}
+                onChange={(value) => setParticipantFilters(prev => ({ ...prev, category: value?.value || '' }))}
+                className="flex-1"
+                placeholder="Category"
+              ></Select.Minimal>
+            </ToggleGroup.Field>
+          )}
           <DashboardPanel.Content>
             <ul
-              className="flex flex-col space-y-1 text-bone-muted"
+              className="flex flex-col space-y-1 text-ink-secondary"
             >
+              {isParticipantsLoading && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>Searching</p>
+                </li>
+              )}
               {participants && participants.length > 0 &&
                 participants.map((participant) => (
                   <li
-                    key={participant.id}
-                    className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
+                    key={participant.name}
+                    className="flex space-x-4 items-center cursor-pointer p-2 rounded-md hover:bg-void-high hover:text-ink"
                     onClick={() => goToProfile(participant)}
                   >
                     <img src={participant.thumbnail} alt={`${participant.name} (Thumbnail)`} className="rounded-circle w-6 h-6 object-cover" />
@@ -224,6 +296,12 @@ const ParticipantsCard = () => {
                   </li>
                 ))
               }
+              {!isParticipantsLoading && participants && participants.length === 0 && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>No participants found</p>
+                </li>
+              )}
             </ul>
           </DashboardPanel.Content>
         </>
@@ -289,7 +367,7 @@ const ParticipantsCard = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="categories">Categories</label>
-                <Select
+                <SelectRaw
                   id="categories"
                   isLoading={isCategoriesLoading}
                   options={categoriesAsOptions}
@@ -297,7 +375,8 @@ const ParticipantsCard = () => {
                   isMulti
                   isSearchable
                   menuPlacement={'auto'}
-                  className="react-select-container"
+                  menuPosition={'fixed'}
+                  className="select"
                   classNamePrefix="react-select"
                 />
                 {errors.categoryIds && <span className="text-red text-sm">{errors.categoryIds}</span>}
@@ -324,8 +403,8 @@ const ParticipantsCard = () => {
                 mapsAnchor={participantTarget.mapsAnchor}
               />
               <div className="mt-11">
-                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Categories</p>
-                <ul className="text-sm text-ink mt-5">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-tertiary">Categories</p>
+                <ul className="text-sm text-ink-secondary mt-5">
                   {isCategoriesFetching
                     ? <li>Loading...</li>
                     : (categories && participantTarget.categoryIds.length > 0)
@@ -390,7 +469,7 @@ const ParticipantsCard = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="categories">Categories</label>
-                  <Select
+                  <SelectRaw
                     id="categories"
                     isLoading={isCategoriesLoading}
                     options={categoriesAsOptions}
@@ -400,7 +479,7 @@ const ParticipantsCard = () => {
                     isSearchable
                     menuPlacement={'auto'}
                     menuPosition={'fixed'}
-                    className="react-select-container"
+                    className="select"
                     classNamePrefix="react-select"
                   />
                   {errors.categoryIds && <p className="text-xs text-red-500 mt-2">{errors.categoryIds}</p>}
@@ -417,7 +496,7 @@ const ParticipantsCard = () => {
               <form onSubmit={deleteParticipant}>
                 <fieldset className="h-full">
                   <label>Delete Participant</label>
-                  <p className="text-sm text-ink/80">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
+                  <p className="text-sm text-ink">Are you sure you want to delete this participant? Remember this cannot be undone!</p>
                   <br />
                   <Button variant="danger" type="submit">Delete</Button>
                 </fieldset>

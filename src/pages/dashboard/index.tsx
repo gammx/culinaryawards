@@ -5,6 +5,7 @@ import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard';
 import CategoriesCard from '~/components/dashboard/CategoriesCard';
 import ActivityCard from '~/components/dashboard/ActivityCard';
+import { Tooltip } from 'react-tooltip';
 
 const Dashboard = () => {
 	const { data } = useSession();
@@ -12,10 +13,9 @@ const Dashboard = () => {
 
 	return (
 		<main
-			className="w-screen h-screen flex flex-col relative bg-void"
+			className="w-screen h-screen flex flex-col relative bg-void overflow-hidden"
 		>
 			<div className="absolute w-full h-full top-0 left-0 bg-[url('/space_grid.png')] bg-cover bg-center bg-no-repeat"></div>
-			<Particles />
 			<div className="flex flex-col basis-5/12 shrink-0">
 				<div className="border basis-1/12"></div>
 				<div className="border basis-11/12"></div>
@@ -31,6 +31,11 @@ const Dashboard = () => {
 					<CategoriesCard />
 				</DashboardPanel.Root>
 			</div>
+			<Tooltip
+				id="dashboard-ttip"
+				place="top"
+				className="!bg-ink-secondary !text-black !opacity-100 !z-50 !rounded-sm !px-2 !py-1 !leading-none !text-sm"
+			></Tooltip>
 		</main>
 	);
 };

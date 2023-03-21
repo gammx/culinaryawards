@@ -1,4 +1,6 @@
-import Select from 'react-select';
+import SelectRaw from 'react-select';
+import ToggleGroup from '~/components/UI/ToggleGroup';
+import Select from '~/components/UI/Select';
 import useZod from '~/hooks/useZod';
 import useViews from '~/utils/useViews';
 import Button from '~/components/UI/Button';
@@ -9,7 +11,8 @@ import type { Option } from '~/utils/select';
 import { ChangeEventHandler, useState, useEffect } from 'react';
 import { trpc } from '~/utils/trpc';
 import { categoryCreateSchema, categoryEditSchema } from '~/utils/schemas/categories';
-import { PlusOutline, FunnelOutline } from '@styled-icons/evaicons-outline';
+import { PlusOutline, FunnelOutline, SearchOutline } from '@styled-icons/evaicons-outline';
+import { useDebounce } from '~/hooks/useDebounce';
 
 const Categories = () => {
   const views = useViews('list');
@@ -33,7 +36,13 @@ const Categories = () => {
   const { validate, errors, setErrors } = useZod(categoryCreateSchema);
   const categoryEditZod = useZod(categoryEditSchema);
   const utils = trpc.useContext();
-  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.getAllCategories.useQuery(undefined, {
+  const [isFilterAreaVisible, setIsFilterAreaVisible] = useState(false);
+  const [categoryFilters, setCategoryFilters] = useState({
+    name: '',
+    participant: '',
+  });
+  const debouncedCategoryNameFilter = useDebounce(categoryFilters.name, 500);
+  const { data: categories, isLoading: isCategoriesLoading } = trpc.categories.filter.useQuery({ ...categoryFilters, name: debouncedCategoryNameFilter }, {
     onSuccess(data) {
       // Sync the category profile with the fetched data
       if (data && categoryProfile) {
@@ -203,21 +212,61 @@ const Categories = () => {
           <DashboardPanel.Titlebar
             title="Categories"
           >
-            <DashboardPanel.IconButton icon={PlusOutline} onClick={() => views.go('add')} />
-            <DashboardPanel.IconButton icon={FunnelOutline} />
+            <DashboardPanel.IconButton
+              icon={PlusOutline}
+              onClick={() => views.go('add')}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Add Category"
+            />
+            <DashboardPanel.IconButton
+              icon={FunnelOutline}
+              data-tooltip-id="dashboard-ttip"
+              data-tooltip-content="Filter"
+              onClick={() => setIsFilterAreaVisible(!isFilterAreaVisible)}
+            />
           </DashboardPanel.Titlebar>
-          <DashboardPanel.Input outlined type="text" placeholder="Search" />
+          <DashboardPanel.Input
+            outlined
+            type="text"
+            placeholder="Search"
+            value={categoryFilters.name}
+            onChange={e => setCategoryFilters(prev => ({ ...prev, name: e.target.value }))}
+          />
+          {isFilterAreaVisible && (
+            <ToggleGroup.Field label="Filter by">
+              <Select.Minimal
+                id="category-filter"
+                isLoading={isParticipantsFetching}
+                options={participantsAsOptions}
+                className="flex-1"
+                placeholder="Participant"
+                onChange={(value) => setCategoryFilters(prev => ({ ...prev, participant: value?.value || '' }))}
+              ></Select.Minimal>
+            </ToggleGroup.Field>
+          )}
           <DashboardPanel.Content>
-            <ul className="flex flex-col space-y-1 text-bone-muted">
+            <ul className="flex flex-col space-y-1 text-ink-secondary">
+              {isCategoriesLoading && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>Searching</p>
+                </li>
+              )}
               {categories && categories.length > 0 && categories.map((category) => (
                 <li
                   key={category.id}
-                  className="flex space-x-4 items-center cursor-pointer card-search-bg p-2"
+                  className="flex space-x-4 items-center cursor-pointer p-2 hover:bg-void-high hover:ink rounded-md"
                   onClick={() => goToProfile(category)}
                 >
                   {category.name}
                 </li>
               ))}
+              {!isCategoriesLoading && categories && categories.length === 0 && (
+                <li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+                  <SearchOutline size={20} />
+                  <p>No categories found</p>
+                </li>
+              )}
             </ul>
           </DashboardPanel.Content>
         </>
@@ -240,7 +289,7 @@ const Categories = () => {
                   value={categoryCreatable.name}
                   onChange={categoryCreateHandler}
                 />
-                {errors.name && <span className="text-red text-xs">{errors.name}</span>}
+                {errors.name && <span className="text-pastel-red text-xs">{errors.name}</span>}
               </fieldset>
               <fieldset>
                 <label htmlFor="location">Location</label>
@@ -253,7 +302,7 @@ const Categories = () => {
               </fieldset>
               <fieldset>
                 <label htmlFor="participantIds">Participants</label>
-                <Select
+                <SelectRaw
                   id="participantIds"
                   isLoading={isCategoriesLoading}
                   options={participantsAsOptions}
@@ -262,7 +311,7 @@ const Categories = () => {
                   isSearchable
                   menuPlacement={'auto'}
                   menuPosition={'fixed'}
-                  className="react-select-container"
+                  className="select"
                   classNamePrefix="react-select"
                 />
               </fieldset>
@@ -274,7 +323,6 @@ const Categories = () => {
 
       {views.current === 'profile' && categoryProfile && (
         <>
-
           {/** PARTICIPANT INFO ----------------------------------------- */}
           <DashboardPanel.Tabs
             state={[categoryProfileTab, setCategoryProfileTab]}
@@ -284,13 +332,13 @@ const Categories = () => {
               <div className="flex justify-center relative">
                 <Image src={`/retrowave_plains/${categoryBanner}.png`} width={180} height={160} alt="Retrowave figure" />
                 <div className="absolute w-full h-full top-0 left-0 flex flex-col justify-end items-center text-center space-y-2 pb-8">
-                  <h1 className="font-display text-bone text-2xl">{categoryProfile.name}</h1>
-                  <p className="font-display text-bone text-xs uppercase">{categoryProfile.location}</p>
+                  <h1 className="font-display text-ink text-2xl">{categoryProfile.name}</h1>
+                  <p className="font-display text-ink text-xs uppercase">{categoryProfile.location}</p>
                 </div>
               </div>
               <div className="mt-11">
-                <p className="text-xs font-medium tracking-wider uppercase text-ink-dark">Participants</p>
-                <ul className="text-sm text-ink mt-5 space-y-2">
+                <p className="text-xs font-medium tracking-wider uppercase text-ink-tertiary">Participants</p>
+                <ul className="text-sm text-ink-secondary mt-5 space-y-2">
                   {isParticipantsFetching
                     ? <li>Loading...</li>
                     : (participants && categoryProfile.participantIds.length > 0)
@@ -314,7 +362,7 @@ const Categories = () => {
                     value={categoryEditable.name}
                     onChange={editableHandler}
                   />
-                  {categoryEditZod.errors.name && <p className="text-xs text-red mt-2">{categoryEditZod.errors.name}</p>}
+                  {categoryEditZod.errors.name && <p className="text-xs text-pastel-red mt-2">{categoryEditZod.errors.name}</p>}
                 </fieldset>
                 <fieldset>
                   <label htmlFor="location">Location</label>
@@ -327,7 +375,7 @@ const Categories = () => {
                 </fieldset>
                 <fieldset>
                   <label htmlFor="participantIds">Categories</label>
-                  <Select
+                  <SelectRaw
                     id="participantIds"
                     isLoading={isCategoriesLoading}
                     options={participantsAsOptions}
@@ -337,7 +385,7 @@ const Categories = () => {
                     isSearchable
                     menuPlacement={'auto'}
                     menuPosition={'fixed'}
-                    className="react-select-container"
+                    className="select"
                     classNamePrefix="react-select"
                   />
                 </fieldset>
@@ -350,7 +398,7 @@ const Categories = () => {
               <form onSubmit={deleteCategory}>
                 <fieldset>
                   <label>Delete Category</label>
-                  <p className="text-ink/80">Are you sure you want to delete this category?</p>
+                  <p className="text-ink">Are you sure you want to delete this category?</p>
                   <br />
                   <Button type="submit" variant="danger">Delete</Button>
                 </fieldset>

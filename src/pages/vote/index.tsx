@@ -6,6 +6,7 @@ import { ArrowRightOutline, ArrowLeftOutline, CheckmarkSquareOutline, PaperPlane
 import { Participant } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { Particles } from '~/hooks/useParticles';
+import Button from '~/components/UI/Button';
 
 interface Vote {
   categoryId: string;
@@ -96,7 +97,7 @@ const Vote = () => {
       <div className="w-full h-full flex flex-col">
         <Progress.Root value={progress} className="w-full overflow-hidden h-2" style={{ transition: 'translateZ(0)' }}>
           <Progress.Indicator
-            className="bg-bone w-full h-full transition-all duration-500"
+            className="bg-ink w-full h-full transition-all duration-500"
             style={{ transform: `translateX(-${100 - progress}%)` }}
           />
         </Progress.Root>
@@ -107,24 +108,15 @@ const Vote = () => {
               <div>
                 <h1 className="font-display text-5xl font-medium">{categories[currentCategory]?.name}</h1>
                 {categories[currentCategory]?.location && (
-                  <div className="py-[2px] px-2 bg-pink-vivid text-sm font-medium inline-block uppercase my-5 tracking-wide">{categories[currentCategory]?.location}</div>
+                  <div className="py-[2px] px-2 bg-pink text-sm font-medium inline-block uppercase my-5 tracking-wide">{categories[currentCategory]?.location}</div>
                 )}
               </div>
               <div className="flex space-x-4">
                 {currentCategory > 0 && (
-                  <button
-                    className="border border-bone font-display font-bold uppercase inline-flex p-3 transition-opacity duration-300"
-                    onClick={goToPreviousCategory}
-                  >
-                    <ArrowLeftOutline className="mr-2" size={24} />
-                    Back
-                  </button>
+                  <Button outlined variant="primary" onClick={goToPreviousCategory}><ArrowLeftOutline className="mr-2" size={24} />Back</Button>
                 )}
-                <button
-                  className={cn("bg-bone text-void font-display font-bold uppercase inline-flex items-center p-3 transition-opacity duration-300", {
-                    "cursor-not-allowed opacity-10": !hasVotedCurrentCategory(),
-                    "bg-pink": isLastCategory(),
-                  })}
+                <Button
+                  variant={isLastCategory() ? 'pink' : 'primary'}
                   disabled={!hasVotedCurrentCategory()}
                   onClick={isLastCategory() ? sendVotes : goToNextCategory}
                 >
@@ -139,7 +131,7 @@ const Vote = () => {
                       Next
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
 

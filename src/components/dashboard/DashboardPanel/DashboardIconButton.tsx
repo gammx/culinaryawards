@@ -13,10 +13,10 @@ const DashboardIconButton: React.FC<DashboardIconButtonProps> = ({
 }) => {
 	return (
 		<button
-			className={cn("flex items-center justify-center w-6 h-6 border border-linear rounded-md shadow-xl shadow-linear cursor-pointer hover:opacity-80", className)}
+			className={cn("flex items-center justify-center w-6 h-6 border border-linear-tertiary rounded-md cursor-pointer hover:border-linear text-ink-secondary hover:text-ink", className)}
 			{...props}
 		>
-			<Icon className="text-bone" size={16} />
+			<Icon size={16} />
 		</button>
 	);
 };
