@@ -1,11 +1,11 @@
+import { useSession } from 'next-auth/react';
+import { Tooltip } from 'react-tooltip';
 import withAdminSession from '~/hoc/withAdminSession';
 import DashboardPanel from '~/components/dashboard/DashboardPanel';
 import ParticipantsCard from '~/components/dashboard/ParticipantsCard';
 import CategoriesCard from '~/components/dashboard/CategoriesCard';
 import ActivityCard from '~/components/dashboard/ActivityCard';
 import VotesCard from '~/components/VotesCard';
-import { useSession } from 'next-auth/react';
-import { Tooltip } from 'react-tooltip';
 
 const Dashboard = () => {
 	const { data } = useSession();
@@ -18,7 +18,7 @@ const Dashboard = () => {
 			<div className="absolute w-full h-full top-0 left-0 bg-[url('/space_grid.png')] bg-cover bg-center bg-no-repeat"></div>
 			<div className="flex flex-col basis-5/12 shrink-0">
 				<div className="basis-1/12"></div>
-				<div className="basis-11/12 flex mx-6 space-x-5 z-10">
+				<div className="basis-11/12 flex mx-6 space-x-5 z-10 max-h-[366px]">
 					<div className="w-[350px] h-full">
 						<VotesCard />
 					</div>
