@@ -6,6 +6,7 @@ import { trpc } from "../utils/trpc";
 
 import '../styles/globals.css';
 import '../styles/bits/select.scss';
+import '../styles/bits/dashboard.scss';
 import 'react-tooltip/dist/react-tooltip.css';
 
 const MyApp: AppType<{ session: Session | null }> = ({

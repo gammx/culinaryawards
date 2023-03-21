@@ -1,0 +1,15 @@
+.votes-card-iridescent {
+	background-image: url('/votes_card_iridescent.png');
+	background-size: cover;
+	background-repeat: no-repeat;
+	//animation: rotating-iridescent-border 5s infinite;
+}
+
+@keyframes rotating-iridescent-border {
+	0% {
+		transform: rotate(0deg) scale(1.5);
+	}
+	100% {
+		transform: rotate(360deg) scale(1.5);
+	}
+}
