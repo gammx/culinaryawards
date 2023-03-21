@@ -115,18 +115,6 @@ export const participantRouter = router({
 				},
 			});
 		}),
-	filterByName: adminProcedure
-		.input(z.object({ name: z.string() }))
-		.query(async ({ ctx, input }) => {
-			return await ctx.prisma.participant.findMany({
-				where: {
-					name: {
-						contains: input.name.trim(),
-						mode: 'insensitive',
-					},
-				},
-			});
-		}),
 	filter: adminProcedure
 		.input(participantFilterSchema)
 		.query(async ({ ctx, input }) => {
