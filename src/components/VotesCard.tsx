@@ -1,6 +1,9 @@
 import React from 'react';
 import useViews from '~/utils/useViews';
 import { ChevronLeftOutline } from '@styled-icons/evaicons-outline';
+import FieldLabel from './UI/FieldLabel';
+import DashboardCardInput from './dashboard/DashboardPanel/DashboardCardInput';
+import Button from './UI/Button';
 
 interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -22,7 +25,7 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 							) : (
 								<>
 									<ChevronLeftOutline role="button" size={24} className="fill-ink-secondary hover:fill-ink" onClick={views.goBack} />
-									<h1 className="font-display text-lg text-ink">The Winners</h1>
+									<h1 className="font-display text-lg text-ink">{views.current === "preview" ? "The Winners" : "Edit Goal"}</h1>
 								</>
 							)}
 						</div>
@@ -36,7 +39,10 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 							</div>
 
 							<div className="flex-1 grid grid-cols-2">
-								<div className="flex items-center justify-center text-ink-secondary uppercase border-r border-linear hover:underline select-none cursor-pointer">
+								<div 
+									className="flex items-center justify-center text-ink-secondary uppercase border-r border-linear hover:underline select-none cursor-pointer"
+									onClick={() => views.go("edit_goal")}
+								>
 									<p>Edit Goal</p>
 								</div>
 								<div className="flex items-center justify-center text-ink-secondary uppercase hover:underline select-none cursor-pointer" onClick={() => views.go("preview")}>
@@ -61,6 +67,14 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 								<div className="p-px text-black text-xs bg-pastel-blue">Best Game</div>
 							</li>
 						</ul>
+					)}
+
+					{views.current === "edit_goal" && (
+						<div className="px-8 py-4">
+							<FieldLabel>Total Expected Votes</FieldLabel>
+							<DashboardCardInput placeholder="Eg: 12,200" className="mt-4 mb-5" />
+							<Button variant="primary">Save</Button>
+						</div>
 					)}
 				</div>
 			</div>
