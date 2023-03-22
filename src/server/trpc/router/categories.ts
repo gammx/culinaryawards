@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, adminProcedure, publicProcedure } from "../trpc";
-import { categoryCreateSchema, categoryEditSchema, categoryFilterSchema } from "~/utils/schemas/categories";
+import { categoryCreateSchema, categoryEditSchema, categoryFilterSchema, CategoryWinnerPredictions } from "~/utils/schemas/categories";
 
 export const categoryRouter = router({
 	getAllCategories: publicProcedure.query(async ({ ctx }) => {
@@ -108,5 +108,30 @@ export const categoryRouter = router({
 					} : undefined,
 				},
 			});
+		}),
+	/** Returns all the categories, each with the most voted participant at the moment */
+	getCategoryPredictions: adminProcedure
+		.query(async ({ ctx }) => {
+			const categories = await ctx.prisma.category.findMany();
+			const votes = await ctx.prisma.votes.findMany({ include: { participant: true } });
+
+			const categoryPredictions = categories.map((category) => {
+				const categoryVotes = votes.filter((vote) => vote.categoryId === category.id);
+				const categoryParticipants = categoryVotes.map((vote) => vote.participant);
+				// Get the vote count for each participant to later find the most voted one
+				const categoryParticipantsWithVotes = categoryParticipants.map((participant) => {
+					const participantVotes = categoryVotes.filter((vote) => vote.participantId === participant.id);
+					return {
+						...participant,
+						voteCount: participantVotes.length,
+					};
+				});
+				const mostVotedParticipant = categoryParticipantsWithVotes.reduce((prev, current) => (prev.voteCount > current.voteCount) ? prev : current);
+				return {
+					category,
+					prediction: mostVotedParticipant,
+				};
+			});
+			return categoryPredictions as CategoryWinnerPredictions;
 		}),
 });

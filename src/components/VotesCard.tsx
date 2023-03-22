@@ -1,14 +1,28 @@
 import React from 'react';
 import useViews from '~/utils/useViews';
-import { ChevronLeftOutline } from '@styled-icons/evaicons-outline';
+import { ChevronLeftOutline, LoaderOutline } from '@styled-icons/evaicons-outline';
 import FieldLabel from './UI/FieldLabel';
 import DashboardCardInput from './dashboard/DashboardPanel/DashboardCardInput';
 import Button from './UI/Button';
+import { trpc } from '~/utils/trpc';
 
 interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 const VotesCard: React.FC<DashboardCardProps> = () => {
 	const views = useViews("overview");
+
+	const { data: categoryPredictions, isLoading: isCategoryPredictionsLoading } = trpc.categories.getCategoryPredictions.useQuery(undefined, {
+		enabled: views.current === "preview",
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+		refetchInterval: 1000 * 60 * 5, // 5 minutes
+	});
+
+	const getRandomPastelColor = () => {
+		const colors = ["pink", "green", "blue", "purple", "red", "yellow"];
+		const color = colors[Math.floor(Math.random() * colors.length)];
+		return `rgb(var(--pastel-${color}))`;
+	};
 
 	return (
 		<div className="w-full h-full">
@@ -39,7 +53,7 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 							</div>
 
 							<div className="flex-1 grid grid-cols-2">
-								<div 
+								<div
 									className="flex items-center justify-center text-ink-secondary uppercase border-r border-linear hover:underline select-none cursor-pointer"
 									onClick={() => views.go("edit_goal")}
 								>
@@ -54,18 +68,18 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 
 					{views.current === "preview" && (
 						<ul className="flex flex-col space-y-2.5 px-5 py-4 overflow-y-auto dashboard-card-scrollbar">
-							<li className="flex items-center space-x-2">
-								<p className="text-ink-secondary uppercase">Pepe Problemas</p>
-								<div className="p-px text-black text-xs bg-pastel-pink">Best Restaurant</div>
-							</li>
-							<li className="flex items-center space-x-2">
-								<p className="text-ink-secondary uppercase">The Ballas</p>
-								<div className="p-px text-black text-xs bg-pastel-purple">Best Experience</div>
-							</li>
-							<li className="flex items-center space-x-2">
-								<p className="text-ink-secondary uppercase">Halcones</p>
-								<div className="p-px text-black text-xs bg-pastel-blue">Best Game</div>
-							</li>
+							{isCategoryPredictionsLoading && (
+								<li className="flex flex-col space-y-2.5 items-center text-sm mt-6 mb-6 text-ink-tertiary">
+									<LoaderOutline size={20} className="animate-spin" />
+									<p>Getting Predictions</p>
+								</li>
+							)}
+							{categoryPredictions && categoryPredictions.map((categoryPrediction) => (
+								<li className="flex items-center space-x-2" key={categoryPrediction.category.id}>
+									<p className="text-ink-secondary uppercase">{categoryPrediction.prediction.name}</p>
+									<div className="p-px text-black text-xs" style={{ backgroundColor: getRandomPastelColor() }}>{categoryPrediction.category.name}</div>
+								</li>
+							))}
 						</ul>
 					)}
 

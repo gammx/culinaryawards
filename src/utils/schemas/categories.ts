@@ -1,3 +1,4 @@
+import { Category, Participant } from "@prisma/client";
 import { z } from "zod";
 
 export const categoryCreateSchema = z.object({
@@ -16,3 +17,8 @@ export const categoryFilterSchema = z.object({
 	name: z.string().nullable(),
 	participant: z.string().nullable(),
 })
+
+export type CategoryWinnerPredictions = {
+	category: Category;
+	prediction: Participant & { voteCount: number };
+}[];
