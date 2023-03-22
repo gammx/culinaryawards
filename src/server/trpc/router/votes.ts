@@ -55,6 +55,10 @@ export const votesRouter = router({
 			
 			return votes;
 		}),
+	getTotalVoteCount: adminProcedure
+		.query(async ({ ctx }) => {
+			return await ctx.prisma.logs.count({ where: { type: "VOTE" } });
+		}),
 	removeVotes: adminProcedure
 		.input(getVotesSchema)
 		.mutation(async ({ ctx, input }) => {

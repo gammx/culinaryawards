@@ -1,17 +1,31 @@
-import React from 'react';
-import useViews from '~/utils/useViews';
+import React, { useState } from 'react';
 import { ChevronLeftOutline, LoaderOutline } from '@styled-icons/evaicons-outline';
+import { trpc } from '~/utils/trpc';
+import useViews from '~/utils/useViews';
 import FieldLabel from './UI/FieldLabel';
 import DashboardCardInput from './dashboard/DashboardPanel/DashboardCardInput';
 import Button from './UI/Button';
-import { trpc } from '~/utils/trpc';
+import * as Progress from '@radix-ui/react-progress';
 
 const numberFormat = new Intl.NumberFormat("en-US");
 
 const VotesCard = () => {
 	const views = useViews("overview");
 	const utils = trpc.useContext();
-	const { data: settings, isLoading: isSettingsLoading } = trpc.awards.getSettings.useQuery();
+	const { data: totalVoteCount } = trpc.votes.getTotalVoteCount.useQuery(undefined, {
+		enabled: views.current === "overview",
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+		refetchInterval: 1000 * 60 * 5, // 5 minutes
+		onSuccess: (data) => setGoalProgress(100 / (settings?.voteGoal ?? 0) * (data))
+	});
+	const [goalProgress, setGoalProgress] = useState(0);
+	const { data: settings } = trpc.awards.getSettings.useQuery(undefined, {
+		onSuccess(data) {
+			setGoalProgress(100 / (data?.voteGoal ?? 0) * (totalVoteCount ?? 0));
+			setNewVoteGoal(data?.voteGoal?.toString() ?? '');
+		},
+	});
 	const { mutate: setVoteGoal, isLoading: isSettingGoal } = trpc.awards.setVoteGoal.useMutation({
 		onMutate: async ({ voteGoal }) => {
 			await utils.awards.getSettings.cancel();
@@ -64,10 +78,15 @@ const VotesCard = () => {
 						<>
 							<div className="p-8 pt-5 border-b border-linear">
 								<div className="flex items-center space-x-2.5">
-									<p className="text-6xl text-ink mb-6">12,200</p>
+									<p className="text-6xl text-ink mb-6">{totalVoteCount ? numberFormat.format(totalVoteCount) : '0'}</p>
 									{settings && settings.voteGoal && <p className="text-ink-tertiary">/ {numberFormat.format(settings.voteGoal)}</p>}
 								</div>
-								<div className="border border-linear-tertiary w-full h-6"></div>
+								<Progress.Root value={goalProgress} className="border border-linear-tertiary w-full h-6 overflow-hidden" style={{ transition: 'translateZ(0)' }}>
+									<Progress.Indicator
+										className="bg-ink w-full h-full transition-all duration-500"
+										style={{ transform: `translateX(-${100 - goalProgress}%)` }}
+									/>
+								</Progress.Root>
 							</div>
 
 							<div className="flex-1 grid grid-cols-2">
@@ -102,14 +121,16 @@ const VotesCard = () => {
 					)}
 
 					{settings && views.current === "edit_goal" && (
-						<form className="px-8 py-4" onSubmit={() => setVoteGoal({ voteGoal: Number.parseInt(newVoteGoal) })}>
+						<form className="px-8 py-4" onSubmit={(e) => {
+							e.preventDefault();
+							setVoteGoal({ voteGoal: Number.parseInt(newVoteGoal) });
+						}}>
 							<FieldLabel htmlFor="expected_votes">Total Expected Votes</FieldLabel>
 							<DashboardCardInput
 								id="expected_votes"
 								placeholder="Eg: 5000"
 								className="mt-4 mb-5"
 								disabled={isSettingGoal}
-								defaultValue={settings.voteGoal ?? ''}
 								value={newVoteGoal}
 								onChange={e => setNewVoteGoal(e.target.value)}
 							/>
