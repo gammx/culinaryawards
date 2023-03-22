@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Awards {
+  id       String @id @default("culinary_awards") @map("_id")
+  voteGoal Int?
+
+  @@map("awards")
+}
+
 // Necessary for Next auth
 model Account {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId

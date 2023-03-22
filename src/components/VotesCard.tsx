@@ -6,17 +6,32 @@ import DashboardCardInput from './dashboard/DashboardPanel/DashboardCardInput';
 import Button from './UI/Button';
 import { trpc } from '~/utils/trpc';
 
-interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> { }
+const numberFormat = new Intl.NumberFormat("en-US");
 
-const VotesCard: React.FC<DashboardCardProps> = () => {
+const VotesCard = () => {
 	const views = useViews("overview");
-
+	const utils = trpc.useContext();
+	const { data: settings, isLoading: isSettingsLoading } = trpc.awards.getSettings.useQuery();
+	const { mutate: setVoteGoal, isLoading: isSettingGoal } = trpc.awards.setVoteGoal.useMutation({
+		onMutate: async ({ voteGoal }) => {
+			await utils.awards.getSettings.cancel();
+			const prevSettings = utils.awards.getSettings.getData();
+			utils.awards.getSettings.setData(undefined, (prev => ({ ...prev, voteGoal })));
+			views.goBack();
+			return { prevSettings };
+		},
+		onError: (err, vars, ctx) => {
+			ctx && utils.awards.getSettings.setData(undefined, ctx.prevSettings);
+		},
+		onSuccess: ({ voteGoal }) => setNewVoteGoal(voteGoal?.toString() ?? '')
+	});
 	const { data: categoryPredictions, isLoading: isCategoryPredictionsLoading } = trpc.categories.getCategoryPredictions.useQuery(undefined, {
 		enabled: views.current === "preview",
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 		refetchInterval: 1000 * 60 * 5, // 5 minutes
 	});
+	const [newVoteGoal, setNewVoteGoal] = React.useState(settings?.voteGoal?.toString() ?? '');
 
 	const getRandomPastelColor = () => {
 		const colors = ["pink", "green", "blue", "purple", "red", "yellow"];
@@ -48,7 +63,10 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 					{views.current === "overview" && (
 						<>
 							<div className="p-8 pt-5 border-b border-linear">
-								<p className="text-6xl text-ink mb-6">12,200</p>
+								<div className="flex items-center space-x-2.5">
+									<p className="text-6xl text-ink mb-6">12,200</p>
+									{settings && settings.voteGoal && <p className="text-ink-tertiary">/ {numberFormat.format(settings.voteGoal)}</p>}
+								</div>
 								<div className="border border-linear-tertiary w-full h-6"></div>
 							</div>
 
@@ -83,12 +101,20 @@ const VotesCard: React.FC<DashboardCardProps> = () => {
 						</ul>
 					)}
 
-					{views.current === "edit_goal" && (
-						<div className="px-8 py-4">
-							<FieldLabel>Total Expected Votes</FieldLabel>
-							<DashboardCardInput placeholder="Eg: 12,200" className="mt-4 mb-5" />
-							<Button variant="primary">Save</Button>
-						</div>
+					{settings && views.current === "edit_goal" && (
+						<form className="px-8 py-4" onSubmit={() => setVoteGoal({ voteGoal: Number.parseInt(newVoteGoal) })}>
+							<FieldLabel htmlFor="expected_votes">Total Expected Votes</FieldLabel>
+							<DashboardCardInput
+								id="expected_votes"
+								placeholder="Eg: 5000"
+								className="mt-4 mb-5"
+								disabled={isSettingGoal}
+								defaultValue={settings.voteGoal ?? ''}
+								value={newVoteGoal}
+								onChange={e => setNewVoteGoal(e.target.value)}
+							/>
+							<Button disabled={isSettingGoal} variant="primary" type="submit">Save</Button>
+						</form>
 					)}
 				</div>
 			</div>

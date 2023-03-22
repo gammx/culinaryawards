@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 
-interface FieldLabelProps extends React.HTMLAttributes<HTMLLabelElement> {}
+interface FieldLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
 
 const FieldLabel: React.FC<FieldLabelProps> = ({
 	className,
